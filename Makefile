@@ -20,10 +20,13 @@ C_SRCS := $(wildcard $(SRC_DIR)/*.c)
 C_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SRCS))
 C_INCLUDES := $(SRC_DIR)/inc
 CC := $(PREFIX)/bin/$(TARGET)-gcc
-GCC_FLAGS := -I$(C_INCLUDES) -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall
+CC_FLAGS := -I$(C_INCLUDES) -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall
 
 LD := $(PREFIX)/bin/$(TARGET)-ld
-LDFLAGS :=
+LDFLAGS := --oformat=elf32-i386
+
+OBJCOPY := $(PREFIX)/bin/$(TARGET)-objcopy
+OBJDUMP := $(PREFIX)/bin/$(TARGET)-objdump
 
 all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 	@echo "Combine binaries into a single bootable image..."
@@ -47,8 +50,10 @@ $(BOOTLOADER_OBJ): $(BOOTLOADER_SRC) | $(BUILD_DIR)
 
 $(KERNEL_BIN): $(ASM_OBJS) $(C_OBJS) | $(BUILD_DIR)
 	@echo "Building $(KERNEL_BIN)"
-	$(LD) $(LDFLAGS) -T $(SRC_DIR)/linker.ld --oformat=elf32-i386 --relocatable -o $(BUILD_DIR)/kernel_full.o $(ASM_OBJS) $(C_OBJS)
-	$(CC) $(GCC_FLAGS) -T $(SRC_DIR)/linker.ld -o $(BUILD_DIR)/$(KERNEL_BIN) $(BUILD_DIR)/kernel_full.o
+	$(LD) $(LDFLAGS) -T $(SRC_DIR)/linker.ld -o $(BUILD_DIR)/kernel.elf $(ASM_OBJS) $(C_OBJS)
+	$(OBJCOPY) -O binary $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/$(KERNEL_BIN)
+# 	$(LD) $(LDFLAGS) -T $(SRC_DIR)/linker.ld --oformat=elf32-i386 -o $(BUILD_DIR)/kernel_full.o $(ASM_OBJS) $(C_OBJS)
+# 	$(CC) $(CC_FLAGS) -o $(BUILD_DIR)/$(KERNEL_BIN) $(BUILD_DIR)/kernel_full.o
 
 $(ASM_OBJS): $(ASM_SRCS) | $(BUILD_DIR)
 	@echo "Assembling $@"
@@ -56,7 +61,7 @@ $(ASM_OBJS): $(ASM_SRCS) | $(BUILD_DIR)
 
 $(C_OBJS): $(C_SRCS) | $(BUILD_DIR)
 	@echo "Compiling $@"
-	$(CC) $(GCC_FLAGS) -c -o $@ $<
+	$(CC) $(CC_FLAGS) -c -o $@ $<
 
 clean:
 	@echo "Cleaning up..."
