@@ -17,8 +17,9 @@ ASFLAGS := -g -gdwarf-2
 
 # Kernel C files
 C_SRCS := $(wildcard $(SRC_DIR)/*.c)
+C_SRCS += $(wildcard $(SRC_DIR)/utils/*.c)
 C_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SRCS))
-C_INCLUDES := $(SRC_DIR)/inc
+C_INCLUDES := $(SRC_DIR)
 CC := $(PREFIX)/bin/$(TARGET)-gcc
 CC_FLAGS := -I$(C_INCLUDES) -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall
 
@@ -28,6 +29,10 @@ LDFLAGS := --oformat=elf32-i386
 OBJCOPY := $(PREFIX)/bin/$(TARGET)-objcopy
 OBJDUMP := $(PREFIX)/bin/$(TARGET)-objdump
 
+# Get all unique directories from source files
+C_DIRS := $(sort $(dir $(C_SRCS)))
+BUILD_SUBDIRS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(C_DIRS))
+
 all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 	@echo "Combine binaries into a single bootable image..."
 	rm -f $(BUILD_DIR)/$(OS_BIN)
@@ -36,9 +41,12 @@ all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=/dev/zero bs=512 count=100 >> $(BUILD_DIR)/$(OS_BIN)
 	@echo "Build complete: $(BUILD_DIR)/$(OS_BIN)"
 
-$(BUILD_DIR):
+$(BUILD_DIR): $(BUILD_SUBDIRS)
 	@echo "Creating build directory..."
 	mkdir -p $(BUILD_DIR)
+
+$(BUILD_SUBDIRS):
+	mkdir -p $@
 
 $(BOOT_BIN): $(BOOTLOADER_OBJ) | $(BUILD_DIR)
 	@echo "Building $(BOOT_BIN)"
@@ -57,7 +65,7 @@ $(ASM_OBJS): $(ASM_SRCS) | $(BUILD_DIR)
 	@echo "Assembling $@"
 	$(AS) $(ASFLAGS) -o $@ $<
 
-$(C_OBJS): $(C_SRCS) | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@echo "Compiling $@"
 	$(CC) $(CC_FLAGS) -c -o $@ $<
 
