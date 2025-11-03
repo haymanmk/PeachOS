@@ -139,7 +139,8 @@ ata_lba_read:
     push   %ecx            # Save sector count
 .waiting:
     # Wait for the drive to be ready
-    inb    $0x01F7, %al
+    movw   $0x01F7, %dx
+    in     %dx, %al
     testb  $0x08, %al      # Check the DRQ (Data Request) bit
     jz     .waiting       # If not ready, keep waiting
 
@@ -156,6 +157,3 @@ ata_lba_read:
 # the end of the bootloader code should be at offset 510
 .org 510
 .word 0xAA55            # Boot sector signature
-
-# Reserve an address to store the additional message
-buffer: .space 512

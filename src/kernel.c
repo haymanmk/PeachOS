@@ -56,15 +56,7 @@ size_t strlen(const char *str) {
 void printf(const char *str) {
     size_t len = strlen(str);
     for (size_t i = 0; i < len; i++) {
-        put_char(vx, vy, str[i], 0x0F, 0x00); // White on black
-        vx++;
-        if (vx >= VIDEO_WIDTH) {
-            vx = 0;
-            vy++;
-            if (vy >= VIDEO_HEIGHT) {
-                return; // No more space
-            }
-        }
+        print_char(str[i], 0x0F, 0x00); // White on black
     }
 }
 
@@ -72,17 +64,12 @@ void clear_screen() {
     for (int i = 0; i < VIDEO_WIDTH * VIDEO_HEIGHT; i++) {
         video_memory[i] = 0x0F00; // White foreground, black background
     }
-}
-
-void terminal_init() {
-    video_memory = (uint16_t *)0xB8000;
     vx = 0;
     vy = 0;
-    clear_screen();
 }
 
 void kernel_main() {
-    terminal_init();
+    clear_screen();
     printf("Welcome to PeachOS!\n");
     printf("Kernel initialized successfully.\n");
 
