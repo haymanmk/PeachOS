@@ -11,13 +11,18 @@ BOOTLOADER_SRC := $(SRC_DIR)/boot/boot.S
 BOOTLOADER_OBJ := $(BUILD_DIR)/boot.o
 
 ASM_SRCS := $(wildcard $(SRC_DIR)/*.S)
-ASM_OBJS := $(patsubst $(SRC_DIR)/%.S,$(BUILD_DIR)/%.S.o,$(wildcard $(SRC_DIR)/*.S))
+ASM_SRCS += $(wildcard $(SRC_DIR)/idt/*.S)
+ASM_SRCS += $(wildcard $(SRC_DIR)/io/*.S)
+ASM_OBJS := $(patsubst $(SRC_DIR)/%.S,$(BUILD_DIR)/%.S.o,$(ASM_SRCS))
 AS := $(PREFIX)/bin/$(TARGET)-as
 ASFLAGS := -g -gdwarf-2
 
 # Kernel C files
 C_SRCS := $(wildcard $(SRC_DIR)/*.c)
 C_SRCS += $(wildcard $(SRC_DIR)/utils/*.c)
+C_SRCS += $(wildcard $(SRC_DIR)/idt/*.c)
+C_SRCS += $(wildcard $(SRC_DIR)/memory/*.c)
+C_SRCS += $(wildcard $(SRC_DIR)/io/*.c)
 C_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SRCS))
 C_INCLUDES := $(SRC_DIR)
 CC := $(PREFIX)/bin/$(TARGET)-gcc
@@ -29,9 +34,10 @@ LDFLAGS := --oformat=elf32-i386
 OBJCOPY := $(PREFIX)/bin/$(TARGET)-objcopy
 OBJDUMP := $(PREFIX)/bin/$(TARGET)-objdump
 
-# Get all unique directories from source files
+# Get all unique directories from C and assembly source files
 C_DIRS := $(sort $(dir $(C_SRCS)))
-BUILD_SUBDIRS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(C_DIRS))
+ASM_DIRS := $(sort $(dir $(ASM_SRCS)))
+BUILD_SUBDIRS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(sort $(C_DIRS) $(ASM_DIRS)))
 
 all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 	@echo "Combine binaries into a single bootable image..."
@@ -44,6 +50,7 @@ all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 $(BUILD_DIR): $(BUILD_SUBDIRS)
 	@echo "Creating build directory..."
 	mkdir -p $(BUILD_DIR)
+	@echo "\n"
 
 $(BUILD_SUBDIRS):
 	mkdir -p $@
@@ -51,24 +58,33 @@ $(BUILD_SUBDIRS):
 $(BOOT_BIN): $(BOOTLOADER_OBJ) | $(BUILD_DIR)
 	@echo "Building $(BOOT_BIN)"
 	$(LD) $(LDFLAGS) -Ttext 0x7C00 --oformat binary -o $(BUILD_DIR)/$(BOOT_BIN) $(BOOTLOADER_OBJ)
+	@echo "\n"
 
 $(BOOTLOADER_OBJ): $(BOOTLOADER_SRC) | $(BUILD_DIR)
 	@echo "Assembling bootloader..."
 	$(AS) $(ASFLAGS) -o $@ $<
+	@echo "\n"
 
 $(KERNEL_BIN): $(ASM_OBJS) $(C_OBJS) | $(BUILD_DIR)
 	@echo "Building $(KERNEL_BIN)"
 	$(LD) $(LDFLAGS) -T $(SRC_DIR)/linker.ld -Map=$(BUILD_DIR)/kernel.map -o $(BUILD_DIR)/kernel.elf $(ASM_OBJS) $(C_OBJS)
 	$(OBJCOPY) -O binary $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/$(KERNEL_BIN)
+	@echo "\n"
 
-$(ASM_OBJS): $(ASM_SRCS) | $(BUILD_DIR)
+# Build rules for assembly source files
+$(BUILD_DIR)/%.S.o: $(SRC_DIR)/%.S | $(BUILD_DIR)
 	@echo "Assembling $@"
-	$(AS) $(ASFLAGS) -o $@ $<
+# Preprocess assembly source files first
+	$(CC) -E -P -I$(C_INCLUDES) $< | $(AS) $(ASFLAGS) -I$(C_INCLUDES) -o $@ -
+	@echo "\n"
 
+# Build rules for C source files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@echo "Compiling $@"
 	$(CC) $(CC_FLAGS) -c -o $@ $<
+	@echo "\n"
 
 clean:
 	@echo "Cleaning up..."
 	@if [ -d $(BUILD_DIR) ]; then rm -rf $(BUILD_DIR)/*; fi
+	@echo "\n"
