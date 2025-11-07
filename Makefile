@@ -10,19 +10,13 @@ SRC_DIR := src
 BOOTLOADER_SRC := $(SRC_DIR)/boot/boot.S
 BOOTLOADER_OBJ := $(BUILD_DIR)/boot.o
 
-ASM_SRCS := $(wildcard $(SRC_DIR)/*.S)
-ASM_SRCS += $(wildcard $(SRC_DIR)/idt/*.S)
-ASM_SRCS += $(wildcard $(SRC_DIR)/io/*.S)
+ASM_SRCS := $(shell find $(SRC_DIR) -name '*.S' ! -path '$(SRC_DIR)/boot/*')
 ASM_OBJS := $(patsubst $(SRC_DIR)/%.S,$(BUILD_DIR)/%.S.o,$(ASM_SRCS))
 AS := $(PREFIX)/bin/$(TARGET)-as
 ASFLAGS := -g -gdwarf-2
 
 # Kernel C files
-C_SRCS := $(wildcard $(SRC_DIR)/*.c)
-C_SRCS += $(wildcard $(SRC_DIR)/utils/*.c)
-C_SRCS += $(wildcard $(SRC_DIR)/idt/*.c)
-C_SRCS += $(wildcard $(SRC_DIR)/memory/*.c)
-C_SRCS += $(wildcard $(SRC_DIR)/io/*.c)
+C_SRCS := $(shell find $(SRC_DIR) -name '*.c')
 C_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SRCS))
 C_INCLUDES := $(SRC_DIR)
 CC := $(PREFIX)/bin/$(TARGET)-gcc

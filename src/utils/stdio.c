@@ -51,7 +51,13 @@ size_t strlen(const char *str) {
     return len;
 }
 
-void printf(const char *str) {
+/**
+ * A simple printf implementation that only supports string literals.
+ * @param str The string to print.
+ * 
+ * TODO: Extend this function to support format specifiers and variable arguments.
+ */
+void printf(const char *str, ...) {
     size_t len = strlen(str);
     for (size_t i = 0; i < len; i++) {
         print_char(str[i], 0x0F, 0x00); // White on black

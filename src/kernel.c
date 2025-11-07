@@ -2,6 +2,7 @@
 #include "utils/stdio.h"
 #include "idt/idt.h"
 #include "io/io.h"
+#include "memory/heap/kheap.h"
 
 void kernel_main() {
     clear_screen();
@@ -13,6 +14,13 @@ void kernel_main() {
 
     // Enable interrupts
     idt_enable_interrupts();
+
+    // Initialize the kernel heap
+    kheap_init();
+
+    // Malloc some memory from the kernel heap for testing
+    void* test_ptr = kheap_malloc(KERNEL_HEAP_BLOCK_SIZE * 3);
+    (void)test_ptr; // Suppress unused variable warning
 
     // Kernel main function implementation
     while (1) {

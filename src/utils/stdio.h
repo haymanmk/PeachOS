@@ -10,7 +10,7 @@
 // Function prototypes
 void put_char(int x, int y, char c, uint8_t fg, uint8_t bg);
 void print_char(char c, uint8_t fg, uint8_t bg);
-void printf(const char *str);
+void printf(const char *str, ...);
 void clear_screen();
 size_t strlen(const char *str);
 
