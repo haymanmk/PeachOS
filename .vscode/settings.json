@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "kernel.h": "c",
-        "memory.h": "c"
+        "memory.h": "c",
+        "paging.h": "c"
     }
 }

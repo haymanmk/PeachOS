@@ -2,7 +2,7 @@
 #define __CONFIG_H__
 
 // Configuration options for the kernel and system
-// Interrupts
+/* Interrupts */
 #define IDT_SIZE 256
 #define __PIC1_COMMAND_PORT 0x20
 #define __PIC1_DATA_PORT 0x21
@@ -11,9 +11,16 @@
 #define KERNEL_CODE_SELECTOR 0x08
 #define KERNEL_DATA_SELECTOR 0x10
 
-// Memory
+/* Memory */
+// Paging
+#define PAGE_DIRECTORY_SIZE 4096
+#define PAGE_TABLE_SIZE 4096
+#define PAGE_SIZE 4096
+#define PAGE_ENTRIES_PER_TABLE 1024
+
+// Kernel Heap
 // Allocate 100 MB for the kernel heap
-#define KERNEL_HEAP_BLOCK_SIZE 4096
+#define KERNEL_HEAP_BLOCK_SIZE PAGE_SIZE // This should match the page size
 #define KERNEL_HEAP_SIZE_BYTES (100 * 1024 * 1024)
 // NOTE: KERNEL_HEAP_MAX_BLOCKS must not exceed 0xFFFFFFFF-1 due to block index type limitation
 #define KERNEL_HEAP_MAX_BLOCKS (KERNEL_HEAP_SIZE_BYTES / KERNEL_HEAP_BLOCK_SIZE)

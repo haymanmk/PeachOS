@@ -1,6 +1,7 @@
 #include "kheap.h"
 #include "heap.h"
 #include "utils/stdio.h"
+#include "memory/memory.h"
 
 /**
  * @file kheap.c
@@ -37,6 +38,19 @@ void kheap_init() {
  */
 void* kheap_malloc(size_t size) {
     return heap_malloc(&kernel_heap, size);
+}
+
+/**
+ * @brief Allocate zero-initialized memory from the kernel heap.
+ * @param size The size of memory to allocate in bytes.
+ * @return Pointer to the allocated memory, or NULL if allocation fails.
+ */
+void* kheap_zmalloc(size_t size) {
+    void* ptr = kheap_malloc(size);
+    if (ptr) {
+        memset(ptr, 0, size);
+    }
+    return ptr;
 }
 
 /**
