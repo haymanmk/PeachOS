@@ -4,6 +4,7 @@
 #include "io/io.h"
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
+#include "disk/disk.h"
 
 static paging_4gb_chunk_t* kernel_paging_chunk = NULL;
 
@@ -20,6 +21,24 @@ void kernel_main() {
 
     // Initialize the kernel heap
     kheap_init();
+
+    // Initialize disk subsystem
+    if (disk_init() != 0) {
+        printf("Disk initialization failed!\n");
+        return;
+    }
+
+    /**
+     * Testing disk read
+     */
+    disk_t* disk0 = disk_get_by_uid(0);
+    if (disk0) {
+        uint8_t buffer[DISK_SECTOR_SIZE]; // Buffer to hold one sector
+        if (disk_read_lba(disk0, 0, 1, buffer) == 0) {
+            printf("Read sector 0 from disk 0 successfully.\n");
+            printf("First byte of sector: \r\n");
+        }
+    }
 
     // Setup paging
     uint8_t paging_flags = PAGING_FLAG_PRESENT | PAGING_FLAG_WRITABLE | PAGING_FLAG_USER;
