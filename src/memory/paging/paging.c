@@ -28,11 +28,11 @@ bool paging_is_aligned_to_page_size(uint32_t address) {
  * @param virtual_address The virtual address to translate.
  * @param directory_index Pointer to store the resulting page directory index.
  * @param table_index Pointer to store the resulting page table index.
- * @return ENONE on success, or -EINVALARG if the address is not aligned to page size.
+ * @return ENONE on success, or -EINVAL if the address is not aligned to page size.
  */
 int paging_get_indexes_from_address(uint32_t virtual_address, uint32_t* directory_index, uint32_t* table_index) {
     if (!paging_is_aligned_to_page_size(virtual_address)) {
-        return -EINVALARG; // Address is not aligned to page size
+        return -EINVAL; // Address is not aligned to page size
     }
 
     *directory_index = virtual_address / (PAGE_SIZE * PAGE_ENTRIES_PER_TABLE); // 4MB per directory entry
@@ -113,26 +113,26 @@ void paging_switch_4gb_chunk(paging_4gb_chunk_t* chunk) {
  * @param chunk Pointer to the paging 4GB chunk.
  * @param virtual_address The virtual address to map (should be aligned to page size).
  * @param value The pointer to the page frame descriptor with flags.
- * @return ENONE on success, or -EINVALARG on failure.
+ * @return ENONE on success, or -EINVAL on failure.
  */
 int paging_map_virtual_address(
     paging_4gb_chunk_t* chunk,
     uint32_t virtual_address,
     uint32_t value) {
     if (!chunk || !value) {
-        return -EINVALARG;
+        return -EINVAL;
     }
 
     uint32_t directory_index, table_index;
     if (paging_get_indexes_from_address(virtual_address, &directory_index, &table_index) != ENONE) {
-        return -EINVALARG;
+        return -EINVAL;
     }
 
     // Remove the flags from the page table address first
     paging_descriptor_entry_t* page_table =
         (paging_descriptor_entry_t*)(chunk->directory_ptr[directory_index] & ~0xFFF);
     if (!page_table) {
-        return -EINVALARG;
+        return -EINVAL;
     }
     page_table[table_index] = value;
 

@@ -21,7 +21,7 @@ static error_t heap_validate_table(heap_table_t* table, void* start_ptr, void* e
     size_t total_size = (size_t)((uintptr_t)end_ptr - (uintptr_t)start_ptr);
     size_t expected_blocks = total_size / KERNEL_HEAP_BLOCK_SIZE;
     if (table->total_blocks != expected_blocks) {
-        return -EINVALARG;
+        return -EINVAL;
     }
     return ENONE;
 }
@@ -179,7 +179,7 @@ error_t heap_init(heap_t* heap, void* start_ptr, void* end_ptr, heap_table_t* ta
 
     // Validate the start and end pointers alignment
     if (!heap_validate_alignment(start_ptr) || !heap_validate_alignment(end_ptr)) {
-        err = -EINVALARG;
+        err = -EINVAL;
         goto exit;
     }
 
