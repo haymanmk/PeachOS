@@ -3,6 +3,10 @@
         "kernel.h": "c",
         "memory.h": "c",
         "paging.h": "c",
-        "status.h": "c"
+        "status.h": "c",
+        "disk.h": "c",
+        "cstring": "c",
+        "variant": "c",
+        "string.h": "c"
     }
 }

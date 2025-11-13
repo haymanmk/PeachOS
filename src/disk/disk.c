@@ -46,20 +46,15 @@ int disk_read_lba_ata(uint32_t lba, uint32_t count, void* buffer) {
  */
 int disk_init() {
     // Disk initialization code goes here
-    for (uint8_t i = 0; i < DISK_MAX_DISKS; i++) {
-        // Detect and initialize disks, populate disk_list
-        // Allocate and set up disk_t structures
-        disk_t* new_disk = (disk_t*)kheap_zmalloc(sizeof(disk_t));
-        if (!new_disk) {
-            return -ENOMEM; // Memory allocation error
-        }
-        new_disk->uid = DISK_MAX_DISKS - i - 1; // Assign unique ID
-        new_disk->type = DISK_TYPE_ATA; // Example type
-        new_disk->limit = 10; // number of sectors (sector size is equal to DISK_SECTOR_SIZE, e.g., 512 bytes)
-        new_disk->partitions = NULL;
-        new_disk->next = disk_list;
-        disk_list = new_disk; // Add to the front of the list, link disks forward
+    disk_t* new_disk = (disk_t*)kheap_zmalloc(sizeof(disk_t));
+    if (!new_disk) {
+        return -ENOMEM; // Memory allocation error
     }
+    new_disk->uid = 0; // Assign a unique ID
+    new_disk->type = DISK_TYPE_ATA; // Set disk type
+    new_disk->sector_size = DISK_SECTOR_SIZE; // Set sector size
+
+    disk_list = new_disk; // Add to the disk list
 
     return 0; // Return 0 on success
 }
@@ -71,13 +66,11 @@ int disk_init() {
  */
 disk_t *disk_get_by_uid(uint8_t uid) {
     // Code to retrieve a disk by its unique ID goes here
-    // Iterate through the linked list of disks for the matching UID
-    disk_t* current = disk_list;
-    while (current) {
-        if (current->uid == uid) {
-            return current;
-        }
-        current = current->next;
+    if (!disk_list) {
+        return NULL; // No disks available
+    }
+    if (disk_list->uid == uid) {
+        return disk_list; // Found the disk
     }
 
     return NULL;
@@ -85,10 +78,6 @@ disk_t *disk_get_by_uid(uint8_t uid) {
 
 int disk_read_lba(disk_t* disk, uint32_t lba, uint32_t count, void* buffer) {
     // Dispatch to the appropriate disk read function based on disk type
-    // Check count does not exceed disk limit
-    if (count > disk->limit) {
-        return -EINVAL; // Invalid argument
-    }
 
     // Call the appropriate read function based on disk type
     switch (disk->type) {
@@ -98,27 +87,4 @@ int disk_read_lba(disk_t* disk, uint32_t lba, uint32_t count, void* buffer) {
         default:
             return -EINVAL; // Unsupported disk type
     }
-}
-
-int disk_add_partition(disk_t* disk, const char* name, uint8_t from, uint8_t size) {
-    // Examine if the name is unique within the disk's partitions
-    disk_partition_t* current = disk->partitions;
-    while (current) {
-        if (strcmp(current->name, name) == 0) {
-            return -EINVAL; // Partition name already exists
-        }
-        current = current->next;
-    }
-    // Create a new partition
-    disk_partition_t* new_partition = (disk_partition_t*)kheap_zmalloc(sizeof(disk_partition_t));
-    if (!new_partition) {
-        return -ENOMEM; // Memory allocation error
-    }
-    strncpy(new_partition->name, name, DEV_NAME_SIZE);
-    new_partition->from = from;
-    new_partition->size = size;
-    new_partition->next = disk->partitions;
-    disk->partitions = new_partition; // Add to the front of the partition list
-
-    return 0; // Success
 }

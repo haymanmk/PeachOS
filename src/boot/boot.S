@@ -7,10 +7,36 @@
 # In case BIOS will tamper with first sector at where BPB(BIOS Parameter Block) is located,
 # we deliberately reserve the space for the BPB before the actual code starts.
 _start:
-    # a short jump over BPB area
+    # A short jump over BPB area which occupies the first 3 bytes of BPB
     jmp .code_start
-    .org 0x21 # reserve space for BPB (33 bytes) excluding the jump instruction (3 bytes)
+    nop                     # Padding to make up 3 bytes
 
+    # Define the rest of the BPB headers here (FAT16)
+    # Note: the type of FAT (FAT12, FAT16, FAT32) is determined by the number of clusters in the data region.
+    #       If the number of clusters is less than 4085, it's FAT12; if it's between 4085 and 65525, it's FAT16; otherwise, it's FAT32.
+    OEMIdentifier:        .ascii "PEACHOS "   # 8 bytes
+    BytesPerSector:       .word 512           # 512 = 0x200
+    SectorsPerCluster:    .byte 0x80          # Cluster is where file data is stored, 0x80 = 128 sectors per cluster
+    ReservedSectors:      .word 200           # Here we reserve 200 sectors for bootloader and our kernel
+    NumberOfFATs:         .byte 2             # Should be 2 in case the compatibility issue
+    MaxRootDirEntries:    .word 0x40          # The maximum number of 32-byte directory entries in the root directory
+    TotalSectors16:       .word 0             # Total sectors used in old 16-bit field (if zero, use TotalSectors32)
+    MediaDescriptor:      .byte 0xF8          # Type of media, 0xF8 for fixed disk (non-removable)
+    SectorsPerFAT16:      .word 0x100         # Number of sectors per FAT (FAT12/16)
+    SectorsPerTrack:      .word 0x10          # Number of sectors per track
+    NumberOfHeads:        .word 0x40          # Number of heads
+    HiddenSectors:        .long 0             # Number of hidden sectors preceding FAT volume. 0 if the volume starts at the beginning of the disk
+    TotalSectors32:       .long 0x773594      # Total sectors used in 32-bit field (if TotalSectors16 is zero)
+
+    # Extended BPB can go here (we use FAT16)
+    DriveNumber:         .byte 0x80           # For hard disks (fixed disk), 0x80
+    Reserved1:           .byte 0              # 1 byte
+    BootSignature:       .byte 0x29           # This indicates that the next three fields are present
+    VolumeID:            .long 0xD105         # Serial number of the volume (you can set it to any value)
+    VolumeLabel:         .ascii "PEACHOSBOOT" # 11 bytes. Volume label in ASCII
+    FileSystemType:      .ascii "FAT16   "    # 8 bytes. File system type in ASCII
+
+    # Bootstrap code (Bootloader) starts here. Total size should be 448 bytes and filled with 0 if not used.
 .code_start:
     cli                     # Clear interrupts
     xorw    %ax, %ax       # Zero out AX
@@ -20,7 +46,7 @@ _start:
     movw    $0x7C00, %sp   # Set stack pointer to 0x7C00
     sti                     # Enable interrupts
 
-    # print a message indicating the bootloader is in protected mode
+    # Print a message indicating the bootloader is in protected mode
     movw    $message_entering_pm, %si   # Use %si (16-bit) in real mode
     call    print_message
 
@@ -154,6 +180,6 @@ ata_lba_read:
     ret
 
 
-# the end of the bootloader code should be at offset 510
+# The end of the bootloader code should be at offset 510
 .org 510
 .word 0xAA55            # Boot sector signature

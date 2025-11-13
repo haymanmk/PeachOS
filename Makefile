@@ -33,12 +33,25 @@ C_DIRS := $(sort $(dir $(C_SRCS)))
 ASM_DIRS := $(sort $(dir $(ASM_SRCS)))
 BUILD_SUBDIRS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(sort $(C_DIRS) $(ASM_DIRS)))
 
+# Define the mount directory for copying files
+MOUNT_DIR := /mnt/peachos
+
 all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 	@echo "Combine binaries into a single bootable image..."
 	rm -f $(BUILD_DIR)/$(OS_BIN)
 	dd if=$(BUILD_DIR)/$(BOOT_BIN) >> $(BUILD_DIR)/$(OS_BIN)
 	dd if=$(BUILD_DIR)/$(KERNEL_BIN) >> $(BUILD_DIR)/$(OS_BIN)
-	dd if=/dev/zero bs=512 count=100 >> $(BUILD_DIR)/$(OS_BIN)
+	dd if=/dev/zero bs=1048576 count=16 >> $(BUILD_DIR)/$(OS_BIN)
+
+	# Copy files into output binary file
+	sudo mkdir -p $(MOUNT_DIR)
+	sudo mount -o loop $(BUILD_DIR)/$(OS_BIN) $(MOUNT_DIR)
+	sudo cp ./hello.txt $(MOUNT_DIR)
+	sudo cp ./config.yml $(MOUNT_DIR)
+	sudo cp ./README.md $(MOUNT_DIR)
+	sudo umount $(MOUNT_DIR)
+	sudo rmdir $(MOUNT_DIR)
+
 	@echo "Build complete: $(BUILD_DIR)/$(OS_BIN)"
 
 $(BUILD_DIR): $(BUILD_SUBDIRS)

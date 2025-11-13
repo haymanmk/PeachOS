@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "string.h"
 
 uint16_t *video_memory = (uint16_t *)0xB8000;
 uint16_t vx = 0;
@@ -41,14 +42,6 @@ void print_char(char c, uint8_t fg, uint8_t bg) {
             return; // No more space
         }
     }
-}
-
-size_t strlen(const char *str) {
-    size_t len = 0;
-    while (str[len]) {
-        len++;
-    }
-    return len;
 }
 
 /**

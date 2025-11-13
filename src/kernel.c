@@ -5,6 +5,8 @@
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
 #include "disk/disk.h"
+#include "disk/streamer.h"
+#include "fs/pparser.h"
 
 static paging_4gb_chunk_t* kernel_paging_chunk = NULL;
 
@@ -65,14 +67,39 @@ void kernel_main() {
      */
 
     /**
-     * Testing memory access after enabling paging.
+     * Testing functionality.
      */
+    // test writing to the mapped virtual address
     char* test_ptr = (char*)test_virtual_address;
     test_ptr[0] = 'A';
     test_ptr[1] = 'B';
     printf(test_ptr);
 
     printf((const char*)test_page_frame);
+
+    // test reading from streamer
+    disk_streamer_t* streamer = disk_streamer_create(0);
+    if (!streamer) {
+        printf("Failed to create disk streamer.\n");
+        return;
+    }
+    if (disk_streamer_seek(streamer, 0x201) != 0) {
+        printf("Failed to seek in disk streamer.\n");
+        return;
+    }
+    uint8_t read_buffer[16];
+    if (disk_streamer_read(streamer, sizeof(read_buffer), read_buffer) != 0) {
+        printf("Failed to read from disk streamer.\n");
+        return;
+    }
+    printf("Data read from disk streamer:\n");
+
+    // test path parser
+    const char* test_path = "0:/folder1/folder2/file.txt";
+    path_root_t* parsed_path = path_parse(test_path);
+    if (parsed_path) {
+        printf("Parsed path for drive number: %d\n", parsed_path->drive_no);
+    }
 
     // Kernel main function implementation
     while (1) {

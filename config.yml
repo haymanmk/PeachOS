@@ -1,0 +1,4 @@
+PeachOS:
+  build_dir: build
+  src_dir: src
+  mount_dir: /mnt/peachos

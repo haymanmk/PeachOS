@@ -35,4 +35,9 @@
 #define DISK_MAX_DISKS 1
 #define DISK_MAX_PARTITIONS 4
 
+/* File System */
+// Path Parser
+#define PATH_MAX_PARTS 32 // Maximum number of parts in a path, e.g., /part1/part2/part3 ...
+#define PATH_MAX_PART_NAME_LENGTH 64 // Maximum length of a part name
+
 #endif // __CONFIG_H__
