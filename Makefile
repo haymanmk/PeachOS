@@ -37,7 +37,7 @@ BUILD_SUBDIRS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(sort $(C_DIRS) $(ASM_D
 MOUNT_DIR := /mnt/peachos
 
 all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
-	@echo "Combine binaries into a single bootable image..."
+	@echo "# Combine binaries into a single bootable image..."
 	rm -f $(BUILD_DIR)/$(OS_BIN)
 	dd if=$(BUILD_DIR)/$(BOOT_BIN) >> $(BUILD_DIR)/$(OS_BIN)
 	dd if=$(BUILD_DIR)/$(KERNEL_BIN) >> $(BUILD_DIR)/$(OS_BIN)
@@ -47,15 +47,19 @@ all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 	sudo mkdir -p $(MOUNT_DIR)
 	sudo mount -o loop $(BUILD_DIR)/$(OS_BIN) $(MOUNT_DIR)
 	sudo cp ./hello.txt $(MOUNT_DIR)
-	sudo cp ./config.yml $(MOUNT_DIR)
+	sudo mkdir -p $(MOUNT_DIR)/config
+	sudo cp ./config.yml $(MOUNT_DIR)/config
 	sudo cp ./README.md $(MOUNT_DIR)
 	sudo umount $(MOUNT_DIR)
 	sudo rmdir $(MOUNT_DIR)
 
-	@echo "Build complete: $(BUILD_DIR)/$(OS_BIN)"
+	@echo "\n"
+	@echo "/********************************\n"
+	@echo "Build complete: $(BUILD_DIR)/$(OS_BIN) \n"
+	@echo "********************************/\n"
 
 $(BUILD_DIR): $(BUILD_SUBDIRS)
-	@echo "Creating build directory..."
+	@echo "# Creating build directory..."
 	mkdir -p $(BUILD_DIR)
 	@echo "\n"
 
@@ -63,35 +67,35 @@ $(BUILD_SUBDIRS):
 	mkdir -p $@
 
 $(BOOT_BIN): $(BOOTLOADER_OBJ) | $(BUILD_DIR)
-	@echo "Building $(BOOT_BIN)"
+	@echo "# Building $(BOOT_BIN)"
 	$(LD) $(LDFLAGS) -Ttext 0x7C00 --oformat binary -o $(BUILD_DIR)/$(BOOT_BIN) $(BOOTLOADER_OBJ)
 	@echo "\n"
 
 $(BOOTLOADER_OBJ): $(BOOTLOADER_SRC) | $(BUILD_DIR)
-	@echo "Assembling bootloader..."
+	@echo "# Assembling bootloader..."
 	$(AS) $(ASFLAGS) -o $@ $<
 	@echo "\n"
 
 $(KERNEL_BIN): $(ASM_OBJS) $(C_OBJS) | $(BUILD_DIR)
-	@echo "Building $(KERNEL_BIN)"
+	@echo "# Building $(KERNEL_BIN)"
 	$(LD) $(LDFLAGS) -T $(SRC_DIR)/linker.ld -Map=$(BUILD_DIR)/kernel.map -o $(BUILD_DIR)/kernel.elf $(ASM_OBJS) $(C_OBJS)
 	$(OBJCOPY) -O binary $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/$(KERNEL_BIN)
 	@echo "\n"
 
 # Build rules for assembly source files
 $(BUILD_DIR)/%.S.o: $(SRC_DIR)/%.S | $(BUILD_DIR)
-	@echo "Assembling $@"
+	@echo "# Assembling $@"
 # Preprocess assembly source files first
 	$(CC) -E -P -I$(C_INCLUDES) $< | $(AS) $(ASFLAGS) -I$(C_INCLUDES) -o $@ -
 	@echo "\n"
 
 # Build rules for C source files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
-	@echo "Compiling $@"
+	@echo "# Compiling $@"
 	$(CC) $(CC_FLAGS) -c -o $@ $<
 	@echo "\n"
 
 clean:
-	@echo "Cleaning up..."
+	@echo "# Cleaning up..."
 	@if [ -d $(BUILD_DIR) ]; then rm -rf $(BUILD_DIR)/*; fi
 	@echo "\n"

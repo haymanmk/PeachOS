@@ -40,4 +40,8 @@
 #define PATH_MAX_PARTS 32 // Maximum number of parts in a path, e.g., /part1/part2/part3 ...
 #define PATH_MAX_PART_NAME_LENGTH 64 // Maximum length of a part name
 
+// File System
+#define FS_MAX_FILE_SYSTEMS 8
+#define FS_MAX_FILE_DESCRIPTORS 256
+
 #endif // __CONFIG_H__
