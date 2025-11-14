@@ -28,8 +28,9 @@ typedef enum {
 typedef struct disk {
     uint8_t uid; // the unique ID of this disk
     disk_type_t type; // the type of this disk
-    uint32_t sector_size; // size of a sector in bytes
+    uint32_t sector_size; // size of a sector in bytes. User application can use this info.
     file_system_t* fs; // the file system mounted on this disk (if any)
+    void* private_data; // private data for the disk driver
 } disk_t;
 
 /* Exported functions */

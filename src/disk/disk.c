@@ -53,9 +53,10 @@ int disk_init() {
     new_disk->uid = 0; // Assign a unique ID
     new_disk->type = DISK_TYPE_ATA; // Set disk type
     new_disk->sector_size = DISK_SECTOR_SIZE; // Set sector size
-    new_disk->fs = file_system_resolve(new_disk); // Resolve file system
 
-    disk_list = new_disk; // Add to the disk list
+    disk_list = new_disk; // Add to the disk list. file_system_resolve needs the disk to be in the list.
+
+    new_disk->fs = file_system_resolve(new_disk); // Resolve file system
 
     return 0; // Return 0 on success
 }
