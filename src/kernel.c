@@ -24,6 +24,12 @@ void kernel_main() {
     // Initialize the kernel heap
     kheap_init();
 
+    // Initialize file system module
+    if (file_init() != ENONE) {
+        printf("File system initialization failed!\n");
+        return;
+    }
+
     // Initialize disk subsystem
     if (disk_init() != 0) {
         printf("Disk initialization failed!\n");

@@ -1,4 +1,5 @@
 #include "file.h"
+#include "fat/fat16.h"
 
 /**
  * @file file.c
@@ -34,6 +35,16 @@ error_t file_load_file_systems() {
     // Reset the file system table
     for (int i = 0; i < FS_MAX_FILE_SYSTEMS; i++) {
         file_systems[i] = NULL;
+    }
+
+    // Load FAT16 file system as an example
+    file_system_t* fat16_fs = fat16_init();
+    if (fat16_fs == NULL) {
+        return -EIO; // Error initializing FAT16
+    }
+    error_t res = file_insert_file_system(fat16_fs);
+    if (res != ENONE) {
+        return res; // Propagate error
     }
 
     return ENONE;

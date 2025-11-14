@@ -8,8 +8,9 @@
 #include "disk/disk.h"
 #include "fs/pparser.h"
 
-#define disk_t disk_t  // A placeholder to indicate dependency on a disk.
-                       // The final definition will be defined later.
+// Forward declaration to avoid circular dependency
+// between file.h and disk.h
+typedef struct disk disk_t;
 
 /* Type definitions */
 typedef enum {

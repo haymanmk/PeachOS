@@ -53,6 +53,6 @@ uint32_t strnlen(const char* str, size_t maxlen) {
 
 char* strcpy(char* dest, const char* src) {
     char* original_dest = dest;
-    while ((*dest++ = *src++) != '\0');
+    while ((*dest++ = *src++) != '\0'); // Copy string including null terminator
     return original_dest;
 }

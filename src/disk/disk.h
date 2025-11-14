@@ -5,6 +5,11 @@
 #include <stddef.h>
 #include "config.h"
 #include "status.h"
+#include "fs/file.h"
+
+// Forward declaration to avoid circular dependency
+// between disk.h and file.h
+typedef struct file_system file_system_t;
 
 #define DEV_NAME_SIZE 32 // the max. number of chars for a device's name
 
@@ -24,6 +29,7 @@ typedef struct disk {
     uint8_t uid; // the unique ID of this disk
     disk_type_t type; // the type of this disk
     uint32_t sector_size; // size of a sector in bytes
+    file_system_t* fs; // the file system mounted on this disk (if any)
 } disk_t;
 
 /* Exported functions */

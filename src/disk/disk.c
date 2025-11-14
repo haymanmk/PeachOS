@@ -53,6 +53,7 @@ int disk_init() {
     new_disk->uid = 0; // Assign a unique ID
     new_disk->type = DISK_TYPE_ATA; // Set disk type
     new_disk->sector_size = DISK_SECTOR_SIZE; // Set sector size
+    new_disk->fs = file_system_resolve(new_disk); // Resolve file system
 
     disk_list = new_disk; // Add to the disk list
 
@@ -76,6 +77,14 @@ disk_t *disk_get_by_uid(uint8_t uid) {
     return NULL;
 }
 
+/**
+ * @brief Read sectors from the specified disk using LBA addressing.
+ * @param disk Pointer to the disk to read from.
+ * @param lba The starting Logical Block Addressing (LBA) sector number.
+ * @param count The number of sectors to read.
+ * @param buffer The buffer to store the read data.
+ * @return 0 on success, error code otherwise.
+ */
 int disk_read_lba(disk_t* disk, uint32_t lba, uint32_t count, void* buffer) {
     // Dispatch to the appropriate disk read function based on disk type
 
