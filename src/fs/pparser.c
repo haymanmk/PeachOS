@@ -55,7 +55,7 @@ path_root_t* path_create_root(uint8_t drive_no) {
         return NULL; // Memory allocation failed
     }
     root->drive_no = drive_no;
-    root->root = NULL;
+    root->first = NULL;
     return root;
 }
 
@@ -154,13 +154,18 @@ path_root_t* path_parse(const char* path) {
         return NULL;
     }
 
-    path_root_t* root = path_create_root(0);
+    // get the drive number
+    uint8_t drive_no = path_get_drive_no(&path);
+    if (drive_no == 0xFF) {
+        return NULL; // invalid path
+    }
+    path_root_t* root = path_create_root(drive_no);
     if (!root) {
         return NULL;
     }
 
-    root->root = path_parse_path_parts(&path);
-    if (!root->root) {
+    root->first = path_parse_path_parts(&path);
+    if (!root->first) {
         kheap_free(root);
         return NULL;
     }
@@ -173,7 +178,7 @@ path_root_t* path_parse(const char* path) {
  * @param parsed_path Pointer to the parsed path structure to free.
  */
 void path_free(path_root_t* parsed_path) {
-    path_part_t* current = parsed_path->root;
+    path_part_t* current = parsed_path->first;
     while (current) {
         path_part_t* next = current->next;
         kheap_free(current);

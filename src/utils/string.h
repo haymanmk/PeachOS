@@ -6,6 +6,13 @@
 #include <stdbool.h>
 
 /**
+ * @brief Convert a character to lowercase.
+ * @param c The character to convert.
+ * @return The lowercase character.
+ */
+char tolower(char c);
+
+/**
  * @brief Copy a string from src to dest.
  * @param dest The destination buffer.
  * @param src The source string.
@@ -15,12 +22,32 @@
 char* strncpy(char* dest, const char* src, size_t n);
 
 /**
- * @brief Compare two strings.
+ * @brief Compare two strings until the first null terminator or difference.
  * @param str1 The first string.
  * @param str2 The second string.
  * @return 0 if equal, negative if str1 < str2, positive if str1 > str2.
  */
 int strcmp(const char* str1, const char* str2);
+
+int strcmp_ignore_case(const char* str1, const char* str2);
+
+/**
+ * @brief Compare two strings up to n characters.
+ * @param str1 The first string.
+ * @param str2 The second string.
+ * @param n The maximum number of characters to compare.
+ * @return 0 if equal, negative if str1 < str2, positive if str1 > str2.
+ */
+int strncmp(const char* str1, const char* str2, size_t n);
+
+/**
+ * @brief Compare two strings up to n characters, ignoring case.
+ * @param str1 The first string.
+ * @param str2 The second string.
+ * @param n The maximum number of characters to compare.
+ * @return 0 if equal, negative if str1 < str2, positive if str1 > str2.
+ */
+int strncmp_ignore_case(const char* str1, const char* str2, size_t n);
 
 /**
  * @brief Check if a character is a digit.

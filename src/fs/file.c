@@ -1,5 +1,8 @@
 #include "file.h"
 #include "fat/fat16.h"
+#include "pparser.h"
+#include "utils/string.h"
+#include "memory/heap/kheap.h"
 
 /**
  * @file file.c
@@ -13,8 +16,7 @@
  */
 
 static file_system_t* file_systems[FS_MAX_FILE_SYSTEMS];
-static file_descriptor_t* file_descriptors[FS_MAX_FILE_DESCRIPTORS];
-
+static file_descriptor_t* file_descriptors[FS_MAX_FILE_DESCRIPTORS]; // 1-based indexing
 /**
  * @brief Find a free slot in the file system table.
  * @return Pointer to the free slot, or NULL if none available.
@@ -28,6 +30,10 @@ static file_system_t** file_get_free_file_system_slot() {
     return NULL; // No free slot
 }
 
+/**
+ * @brief Load built-in file systems into the file system table.
+ * @return 0 on success, negative error code on failure.
+ */
 error_t file_load_file_systems() {
     // Load built-in file systems here (e.g., FAT32, ext4, etc.)
     // For now, we can leave this function empty or add dummy FS.
@@ -49,6 +55,61 @@ error_t file_load_file_systems() {
 
     return ENONE;
 }
+
+file_mode_t file_get_mode_from_string(const char* mode_str) {
+    if (strncmp(mode_str, "r", 1) == 0) {
+        return FILE_MODE_READ;
+    } else if (strncmp(mode_str, "w", 1) == 0) {
+        return FILE_MODE_WRITE;
+    } else if (strncmp(mode_str, "a", 1) == 0) {
+        return FILE_MODE_APPEND;
+    } else if (strncmp(mode_str, "r+", 2) == 0) {
+        return FILE_MODE_READ | FILE_MODE_WRITE;
+    } else if (strncmp(mode_str, "w+", 2) == 0) {
+        return FILE_MODE_READ | FILE_MODE_WRITE;
+    } else if (strncmp(mode_str, "a+", 2) == 0) {
+        return FILE_MODE_READ | FILE_MODE_APPEND;
+    }
+    return FILE_MODE_INVALID; // Invalid mode
+}
+
+/**
+ * @brief Create a new file descriptor and add it to the descriptor table.
+ * @param out_fd Pointer to store the newly created file descriptor.
+ * @return 0 on success, negative error code on failure.
+ */
+int file_new_descriptor(file_descriptor_t** out_fd) {
+    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) {
+        if (file_descriptors[i] == NULL) {
+            // Allocate and initialize a new file descriptor
+            file_descriptor_t* fd = kheap_zmalloc(sizeof(file_descriptor_t));
+            if (!fd) {
+                return -ENOMEM; // Memory allocation error
+            }
+            fd->id = i + 1; // File descriptor IDs start from 1.
+            file_descriptors[i] = fd;
+            *out_fd = fd;
+            return ENONE; // Success
+        }
+    }
+    return -EBUSY; // No free file descriptor slots
+}
+
+/**
+ * @brief Retrieve a file descriptor by its ID.
+ * @param fd_id The ID of the file descriptor to retrieve.
+ * @return Pointer to the file descriptor, or NULL if not found.
+ */
+file_descriptor_t* file_get_descriptor_by_id(uint32_t fd_id) {
+    if (fd_id == 0 || fd_id > FS_MAX_FILE_DESCRIPTORS) {
+        return NULL; // Invalid file descriptor ID
+    }
+    return file_descriptors[fd_id - 1];
+}
+
+/**********************/
+/* Exported Functions */
+/**********************/
 
 /**
  * @brief Initialize the file system module.
@@ -101,4 +162,63 @@ file_system_t* file_system_resolve(disk_t* disk) {
         }
     }
     return NULL; // No matching file system found
+}
+
+/**
+ * @brief Open a file given its path and mode.
+ * @param path The file path to open.
+ * @param mode The mode string (e.g., "r", "w", "a").
+ * @return File descriptor ID on success, negative error code on failure.
+ */
+int file_open(const char* path, const char* mode) {
+    int res = 0;
+    
+    // Parse the path to get the disk and path parts
+    path_root_t* parsed_path = path_parse(path);
+    if (!parsed_path) {
+        return -EINVAL; // Invalid path
+    }
+
+    // Get the disk by drive number
+    disk_t* disk = disk_get_by_uid(parsed_path->drive_no);
+    if (!disk || !disk->fs) {
+        res = -ENOTFOUND; // Disk not found
+        goto exit;
+    }
+
+    // Parse the mode string
+    file_mode_t file_mode = file_get_mode_from_string(mode);
+    if (file_mode == FILE_MODE_INVALID) {
+        res = -EINVAL; // Invalid mode
+        goto exit;
+    }
+
+    // Open the file using the file system's open function
+    void* file_handle = disk->fs->open(disk, parsed_path->first, file_mode);
+    if (IS_ERROR(file_handle)) {
+        res = -EIO; // Error opening file
+        goto exit;
+    }
+
+    // Create a new file descriptor
+    file_descriptor_t* fd = kheap_zmalloc(sizeof(file_descriptor_t));
+    if (!fd) {
+        res = -ENOMEM; // Memory allocation error
+        goto exit;
+    }
+    fd->fs = disk->fs;
+    fd->disk = disk;
+    fd->fs_private_data = file_handle;
+    res = file_new_descriptor(&fd);
+    if (res != ENONE) {
+        kheap_free(fd);
+        goto exit;
+    }
+    res = fd->id; // Return the file descriptor ID
+
+exit:
+    if (parsed_path) {
+        path_free(parsed_path);
+    }
+    return res;
 }

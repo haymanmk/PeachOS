@@ -13,7 +13,7 @@ typedef struct path_part {
 
 typedef struct {
     uint8_t drive_no; // Drive number (e.g., 0 for A:, 1 for B:, etc.)
-    path_part_t* root; // Pointer to the root directory
+    path_part_t* first; // Pointer to the first directory/file part
 } path_root_t;
 
 /* Exported Functions */

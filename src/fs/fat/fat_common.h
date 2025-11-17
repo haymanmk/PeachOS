@@ -19,6 +19,7 @@ typedef enum {
 #define FAT_FILE_ATTR_HIDDEN 0x02
 #define FAT_FILE_ATTR_SYSTEM 0x04
 #define FAT_FILE_ATTR_VOLUME_LABEL 0x08
+#define FAT_FILE_ATTR_LONG_NAME 0x0F
 #define FAT_FILE_ATTR_DIRECTORY 0x10
 #define FAT_FILE_ATTR_ARCHIVE 0x20
 #define FAT_FILE_ATTR_DEVICE 0x40
@@ -72,7 +73,6 @@ typedef struct fat32_extended_header {
 } __attribute__((packed)) fat32_extended_header_t;
 
 // FAT directory entry structure for the Short File Name (SFN) format.
-// Note: Long File Name (LFN) entries are not included here.
 typedef struct fat_directory_entry {
     char name[8];                  // File name
     char ext[3];                   // File extension
@@ -88,6 +88,19 @@ typedef struct fat_directory_entry {
     uint16_t first_cluster_low;    // Low word of first cluster, which contains the starting cluster number of the file. 0 indicates an empty file.
     uint32_t file_size;            // File size in bytes, 0 for directories
 } __attribute__((packed)) fat_directory_entry_t;
+
+// FAT directory entry for Long File Name (LFN) format.
+// Note: LFN entries always precede the corresponding SFN entry.
+typedef struct fat_lfn_entry {
+    uint8_t order;                 // Order of this entry in the sequence
+    uint16_t name1[5];            // First 5 characters of the long file name (UTF-16)
+    uint8_t attributes;            // Attributes (always 0x0F for LFN)
+    uint8_t type;                  // Type (always 0 for LFN)
+    uint8_t checksum;              // Checksum of the short file name
+    uint16_t name2[6];            // Next 6 characters of the long file name (UTF-16)
+    uint16_t first_cluster_low;    // Must be zero for LFN entries
+    uint16_t name3[2];            // Last 2 characters of the long file name (UTF-16)
+} __attribute__((packed)) fat_lfn_entry_t;
 
 /**
  * The following structure is a composite used for easier handling of
@@ -113,6 +126,7 @@ typedef struct fat_directory {
 typedef struct fat_file_directory_representation {
     union {
         fat_directory_entry_t* sfn_entry;        // Pointer to Short File Name entry
+        fat_lfn_entry_t* lfn_entry;              // Pointer to Long File Name entry
         fat_directory_t* directory;              // Pointer to a directory structure
     };
     fat_directory_entry_type_t type;             // Type of the directory entry

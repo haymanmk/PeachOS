@@ -101,10 +101,18 @@ void kernel_main() {
     printf("Data read from disk streamer:\n");
 
     // test path parser
-    const char* test_path = "0:/folder1/folder2/file.txt";
+    const char* test_path = "0:/config.d/sub/config.yml";
     path_root_t* parsed_path = path_parse(test_path);
     if (parsed_path) {
         printf("Parsed path for drive number: %d\n", parsed_path->drive_no);
+    }
+
+    // test file open
+    int fd = file_open(test_path, "r");
+    if (fd < 0) {
+        printf("Failed to open file: %s\n", test_path);
+    } else {
+        printf("File opened successfully with descriptor: %d\n", fd);
     }
 
     // Kernel main function implementation

@@ -2,6 +2,7 @@
 #define __FAT16_H__
 
 #include "fs/file.h"
+#include "status.h"
 
 /* Exported functions */
 file_system_t* fat16_init();

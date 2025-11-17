@@ -6,6 +6,11 @@
 #ifndef STATUS_H
 #define STATUS_H
 
+// Cast an error code to a void pointer for functions that return pointers
+#define ERROR_VOID(code) (void*)((intptr_t)(code))
+#define IS_ERROR(ptr) ((intptr_t)(ptr) < 0)
+#define ERROR_CODE(ptr) ((error_t)(intptr_t)(ptr))
+
 // Status codes
 typedef enum {
     STATUS_OK = 0,

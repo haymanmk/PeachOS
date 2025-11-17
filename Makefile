@@ -47,8 +47,8 @@ all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 	sudo mkdir -p $(MOUNT_DIR)
 	sudo mount -o loop $(BUILD_DIR)/$(OS_BIN) $(MOUNT_DIR)
 	sudo cp ./hello.txt $(MOUNT_DIR)
-	sudo mkdir -p $(MOUNT_DIR)/config
-	sudo cp ./config.yml $(MOUNT_DIR)/config
+	sudo mkdir -p $(MOUNT_DIR)/config.d/sub
+	sudo cp ./config.yml $(MOUNT_DIR)/config.d/sub
 	sudo cp ./README.md $(MOUNT_DIR)
 	sudo umount $(MOUNT_DIR)
 	sudo rmdir $(MOUNT_DIR)

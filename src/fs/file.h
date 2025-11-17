@@ -53,7 +53,7 @@ error_t file_init();
 error_t file_insert_file_system(file_system_t* fs);
 file_system_t* file_system_resolve(disk_t* disk);
 
-file_descriptor_t* file_open(const char* path, file_mode_t mode);
+int file_open(const char* path, const char* mode);
 int file_close(file_descriptor_t* fd);
 size_t file_read(file_descriptor_t* fd, size_t size, void* buffer);
 size_t file_write(file_descriptor_t* fd, size_t size, const void* buffer);
