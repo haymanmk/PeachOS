@@ -8,11 +8,13 @@
 /* Function prototypes */
 int fat16_resolve(disk_t* disk);
 void* fat16_open(disk_t* disk, path_part_t* path_part, file_mode_t mode);
+size_t fat16_read(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer);
 
 static file_system_t fat16_fs = {
     .name = "FAT16",
     .resolve = fat16_resolve,
-    .open = fat16_open
+    .open = fat16_open,
+    .read = fat16_read
 };
 
 /**
@@ -237,13 +239,13 @@ exit:
  * @brief Read bytes from clusters starting from a given cluster in FAT16.
  * @param disk Pointer to the disk.
  * @param start_cluster Starting cluster number.
- * @param offset_in_cluster Offset within the starting cluster in bytes.
+ * @param offset_from_start Offset from the start_cluster in bytes.
  * @param total_bytes Total number of bytes to read.
  * @param buffer Buffer to store the read bytes.
  */
-int fat16_read_bytes_from_clusters(disk_t* disk, uint16_t start_cluster, uint32_t offset_in_cluster, uint32_t total_bytes, void* buffer) {
+int fat16_read_bytes_in_cluster_chain(disk_t* disk, uint16_t start_cluster, uint32_t offset_from_start, uint32_t total_bytes, void* buffer) {
     int res = 0;
-    uint32_t offset = offset_in_cluster; // in bytes
+    uint32_t offset = offset_from_start; // in bytes
     fat_fs_private_data_t* fs_data = (fat_fs_private_data_t*)disk->private_data;
     uint32_t cluster_size_bytes = fs_data->header.common.sectors_per_cluster * disk->sector_size;
     disk_streamer_t* cluster_streamer = fs_data->cluster_streamer;
@@ -318,7 +320,7 @@ fat_directory_t* fat16_load_directory(disk_t* disk, fat_directory_entry_t* entry
         goto failed; // Memory allocation error
     }
     // Read directory entries from disk
-    if (fat16_read_bytes_from_clusters(disk, first_cluster, 0x00, entries_size, directory->entries) < 0) {
+    if (fat16_read_bytes_in_cluster_chain(disk, first_cluster, 0x00, entries_size, directory->entries) < 0) {
         goto failed; // I/O error
     }
 
@@ -553,6 +555,30 @@ void* fat16_open(disk_t* disk, path_part_t* path_part, file_mode_t mode) {
         return (void*)-ENOTFOUND; // File not found
     }
     return (void*)file_rep; // Return the file representation as the file handle
+}
+
+size_t fat16_read(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer) {
+    if (!fd || !fd->fs) {
+        return (size_t)-EBADF; // Bad file descriptor
+    }
+    disk_t* disk = fd->disk;
+    fat_file_directory_representation_t* file_rep = (fat_file_directory_representation_t*)fd->fs_private_data;
+    if (!file_rep || file_rep->type != FAT_DIRECTORY_ENTRY_TYPE_FILE) {
+        return (size_t)-EBADF; // Bad file descriptor
+    }
+    fat_directory_entry_t* entry = file_rep->sfn_entry;
+    uint32_t offset_from_start = file_rep->current_pos;
+    for (size_t i = 0; i < nmemb; i++) {
+        // Read size bytes from cluster chain
+        int res = fat16_read_bytes_in_cluster_chain(disk, entry->first_cluster_low, offset_from_start, size, (uint8_t*)buffer + i * size);
+        if (res < 0) {
+            return (size_t)-EIO; // I/O error
+        }
+        offset_from_start += size;
+    }
+    // Update current position
+    file_rep->current_pos += (uint32_t)(size * nmemb);
+    return nmemb;
 }
 
 /**

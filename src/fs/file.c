@@ -200,20 +200,16 @@ int file_open(const char* path, const char* mode) {
         goto exit;
     }
 
-    // Create a new file descriptor
-    file_descriptor_t* fd = kheap_zmalloc(sizeof(file_descriptor_t));
-    if (!fd) {
-        res = -ENOMEM; // Memory allocation error
+    // Get a free file descriptor slot
+    file_descriptor_t* fd;
+    res = file_new_descriptor(&fd);
+    if (res != ENONE) {
+        // No free file descriptor slots
         goto exit;
     }
     fd->fs = disk->fs;
     fd->disk = disk;
     fd->fs_private_data = file_handle;
-    res = file_new_descriptor(&fd);
-    if (res != ENONE) {
-        kheap_free(fd);
-        goto exit;
-    }
     res = fd->id; // Return the file descriptor ID
 
 exit:
@@ -221,4 +217,12 @@ exit:
         path_free(parsed_path);
     }
     return res;
+}
+
+size_t file_read(void* buffer, size_t size, size_t nmemb, int fd_id) {
+    file_descriptor_t* fd = file_get_descriptor_by_id(fd_id);
+    if (!fd || !fd->fs || !fd->fs->read) {
+        return (size_t)-EBADF; // Bad file descriptor
+    }
+    return fd->fs->read(fd, size, nmemb, buffer);
 }

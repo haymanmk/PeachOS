@@ -113,6 +113,12 @@ void kernel_main() {
         printf("Failed to open file: %s\n", test_path);
     } else {
         printf("File opened successfully with descriptor: %d\n", fd);
+        uint8_t file_read_buffer[16];
+        size_t items_read = file_read(file_read_buffer, 1, sizeof(file_read_buffer)-1, fd);
+        if (items_read > 0) {
+            file_read_buffer[items_read] = '\0'; // Null-terminate the buffer
+            printf((const char*)file_read_buffer);
+        }
     }
 
     // Kernel main function implementation

@@ -130,8 +130,9 @@ typedef struct fat_file_directory_representation {
         fat_directory_t* directory;              // Pointer to a directory structure
     };
     fat_directory_entry_type_t type;             // Type of the directory entry
-    uint32_t current_pos;                        // Current position within the file or directory
-                                                 // which is used for read/write operations
+    uint32_t current_pos;                        // Current position (in bytes) within the file or directory
+                                                 // which might be in a cluster chain
+                                                 // and used for read/write operations
 } fat_file_directory_representation_t;
 
 typedef struct fat_fs_private_data {

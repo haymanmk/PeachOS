@@ -27,7 +27,8 @@ typedef enum {
     EBUSY = 4, // Resource busy
     ENOTFOUND = 5, // Not found
     ENOTDIR = 6, // Not a directory
-    ENODATA = 7 // No data available
+    ENODATA = 7, // No data available
+    EBADF = 8 // Bad file descriptor
 } error_code_t;
 
 typedef int status_t;
