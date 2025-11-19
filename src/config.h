@@ -43,5 +43,6 @@
 // File System
 #define FS_MAX_FILE_SYSTEMS 8
 #define FS_MAX_FILE_DESCRIPTORS 256
+#define FS_MAX_FILE_NAME_LENGTH 64
 
 #endif // __CONFIG_H__
