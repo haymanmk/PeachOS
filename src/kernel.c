@@ -10,6 +10,14 @@
 
 static paging_4gb_chunk_t* kernel_paging_chunk = NULL;
 
+void panic(const char* message) {
+    printf("KERNEL PANIC: %s\n", message);
+    while (1) {
+        // Halt the CPU
+        __asm__ __volatile__("hlt");
+    }
+}
+
 void kernel_main() {
     clear_screen();
     printf("Welcome to PeachOS!\n");
@@ -79,9 +87,7 @@ void kernel_main() {
     char* test_ptr = (char*)test_virtual_address;
     test_ptr[0] = 'A';
     test_ptr[1] = 'B';
-    printf(test_ptr);
 
-    printf((const char*)test_page_frame);
 
     // test reading from streamer
     disk_streamer_t* streamer = disk_streamer_create(0);
@@ -137,6 +143,9 @@ void kernel_main() {
             printf("File descriptor %d closed successfully.\n", fd);
         }
     }
+
+    // Test panic
+    panic("This is a test panic!");
 
     // Kernel main function implementation
     while (1) {

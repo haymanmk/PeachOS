@@ -1,10 +1,16 @@
 #include "stdio.h"
 #include "string.h"
 #include <stdarg.h>
+#include "io/io.h"
 
 uint16_t *video_memory = (uint16_t *)0xB8000;
 uint16_t vx = 0;
 uint16_t vy = 0;
+
+void disable_cursor() {
+    outsb(0x3D4, 0x0A);
+    outsb(0x3D5, 0x20);
+}
 
 uint16_t create_char(char c, uint8_t fg, uint8_t bg) {
     return (bg << 12) | (fg << 8) | c;
@@ -85,6 +91,9 @@ static void itoa(int num, char* buf, int base) {
     *ptr-- = '\0';
 
     // Reverse the string by in-place swapping. ptr1 points to the start, ptr points to the end.
+    // head -------- tail
+    //  ^    swap     ^
+    //  |_____________|
     while (ptr1 < ptr) {
         tmp_char = *ptr;
         *ptr-- = *ptr1;
@@ -190,4 +199,5 @@ void clear_screen() {
     }
     vx = 0;
     vy = 0;
+    disable_cursor();
 }
