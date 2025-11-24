@@ -113,11 +113,21 @@ void kernel_main() {
         printf("Failed to open file: %s\n", test_path);
     } else {
         printf("File opened successfully with descriptor: %d\n", fd);
-        uint8_t file_read_buffer[16];
+        uint8_t file_read_buffer[32];
+        // Seek to an arbitrary position in the file
+        if (file_seek(fd, 10, FILE_SEEK_SET) != 0) {
+            printf("Failed to seek in file descriptor: %d\n", fd);
+        }
         size_t items_read = file_read(file_read_buffer, 1, sizeof(file_read_buffer)-1, fd);
         if (items_read > 0) {
             file_read_buffer[items_read] = '\0'; // Null-terminate the buffer
             printf((const char*)file_read_buffer);
+        }
+
+        // Read the file state
+        file_state_t file_state;
+        if (file_stat(fd, &file_state) == 0) {
+            printf("File size: %u bytes\n", file_state.file_size);
         }
     }
 

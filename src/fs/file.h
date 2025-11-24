@@ -14,9 +14,9 @@ typedef struct disk disk_t;
 
 /* Type definitions */
 typedef enum {
-    SEEK_SET = 0,
-    SEEK_CUR = 1,
-    SEEK_END = 2
+    FILE_SEEK_SET = 0,
+    FILE_SEEK_CUR = 1,
+    FILE_SEEK_END = 2
 } file_seek_mode_t;
 
 typedef enum {
@@ -26,11 +26,22 @@ typedef enum {
     FILE_MODE_APPEND = 1 << 2
 } file_mode_t;
 
+typedef enum {
+    FILE_STATE_READ_ONLY = (1 << 0),
+} file_state_flags_t;
+
+typedef struct file_state {
+    file_state_flags_t flags;
+    uint32_t file_size;
+} file_state_t;
+
 // Function pointers
 typedef struct file_descriptor file_descriptor_t; // Forward declaration
 typedef int(*file_resolve_func_t)(disk_t* disk);
 typedef void*(*file_open_func_t)(disk_t* disk, path_part_t* path_part, file_mode_t mode);
 typedef size_t(*file_read_func_t)(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer);
+typedef int(*file_seek_func_t)(file_descriptor_t* fd, int32_t offset, file_seek_mode_t whence);
+typedef int(*file_stat_func_t)(file_descriptor_t* fd, file_state_t* out_state);
 
 // File system structure
 typedef struct file_system {
@@ -39,6 +50,8 @@ typedef struct file_system {
                                  // Returns 0 if loaded disk matches this FS.
     file_open_func_t open;       // Function to open a file in this file system.
     file_read_func_t read;       // Function to read from a file in this file system.
+    file_seek_func_t seek;       // Function to seek within a file in this file system.
+    file_stat_func_t stat;       // Function to get file status information.
 } file_system_t;
 
 // file descriptor structure
@@ -59,5 +72,7 @@ file_system_t* file_system_resolve(disk_t* disk);
 int file_open(const char* path, const char* mode);
 int file_close(file_descriptor_t* fd);
 size_t file_read(void* buffer, size_t size, size_t nmemb, int fd_id);
+int file_seek(int fd_id, int32_t offset, file_seek_mode_t whence);
+int file_stat(int fd_id, file_state_t* out_state);
 
 #endif // __FILE_H__

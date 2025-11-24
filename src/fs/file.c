@@ -219,10 +219,41 @@ exit:
     return res;
 }
 
+/**
+ * @brief Read data from a file descriptor.
+ * @param buffer Pointer to the buffer to store read data.
+ * @param size Size of each element to read. (in bytes)
+ * @param nmemb Number of elements to read.
+ * @param fd_id The file descriptor ID to read from.
+ * @return Number of elements read on success, negative error code on failure.
+ */
 size_t file_read(void* buffer, size_t size, size_t nmemb, int fd_id) {
     file_descriptor_t* fd = file_get_descriptor_by_id(fd_id);
     if (!fd || !fd->fs || !fd->fs->read) {
         return (size_t)-EBADF; // Bad file descriptor
     }
     return fd->fs->read(fd, size, nmemb, buffer);
+}
+
+int file_stat(int fd_id, file_state_t* out_state) {
+    file_descriptor_t* fd = file_get_descriptor_by_id(fd_id);
+    if (!fd || !fd->fs || !fd->fs->stat) {
+        return -EBADF; // Bad file descriptor
+    }
+    return fd->fs->stat(fd, out_state);
+}
+
+/**
+ * @brief Seek to a specific position in a file descriptor.
+ * @param fd_id The file descriptor ID to seek within.
+ * @param offset The offset to seek to.
+ * @param whence The reference point for the offset.
+ * @return 0 on success, negative error code on failure.
+ */
+int file_seek(int fd_id, int32_t offset, file_seek_mode_t whence) {
+    file_descriptor_t* fd = file_get_descriptor_by_id(fd_id);
+    if (!fd || !fd->fs || !fd->fs->seek) {
+        return -EBADF; // Bad file descriptor
+    }
+    return fd->fs->seek(fd, offset, whence);
 }

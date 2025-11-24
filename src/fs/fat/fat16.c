@@ -9,12 +9,16 @@
 int fat16_resolve(disk_t* disk);
 void* fat16_open(disk_t* disk, path_part_t* path_part, file_mode_t mode);
 size_t fat16_read(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer);
+int fat16_seek(file_descriptor_t* fd, int32_t offset, file_seek_mode_t whence);
+int fat16_stat(file_descriptor_t* fd, file_state_t* out_state);
 
 static file_system_t fat16_fs = {
     .name = "FAT16",
     .resolve = fat16_resolve,
     .open = fat16_open,
-    .read = fat16_read
+    .read = fat16_read,
+    .seek = fat16_seek,
+    .stat = fat16_stat
 };
 
 /**
@@ -557,6 +561,14 @@ void* fat16_open(disk_t* disk, path_part_t* path_part, file_mode_t mode) {
     return (void*)file_rep; // Return the file representation as the file handle
 }
 
+/**
+ * @brief Read data from a FAT16 file.
+ * @param fd Pointer to the file descriptor.
+ * @param size Size of each element to read. (in bytes)
+ * @param nmemb Number of elements to read.
+ * @param buffer Buffer to store the read data.
+ * @return Number of elements read on success, negative error code on failure.
+ */
 size_t fat16_read(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer) {
     if (!fd || !fd->fs) {
         return (size_t)-EBADF; // Bad file descriptor
@@ -579,6 +591,59 @@ size_t fat16_read(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer
     // Update current position
     file_rep->current_pos += (uint32_t)(size * nmemb);
     return nmemb;
+}
+
+/**
+ * @brief Seek to a specific position in a FAT16 file.
+ * @param fd Pointer to the file descriptor.
+ * @param offset The offset to seek to.
+ * @param whence The reference point for the offset. i.e. FILE_SEEK_SET, FILE_SEEK_CUR, FILE_SEEK_END.
+ * @return 0 on success, negative error code on failure.
+ */
+int fat16_seek(file_descriptor_t* fd, int32_t offset, file_seek_mode_t whence) {
+    if (!fd || !fd->fs) {
+        return -EBADF; // Bad file descriptor
+    }
+    fat_file_directory_representation_t* file_rep = (fat_file_directory_representation_t*)fd->fs_private_data;
+    if (!file_rep || file_rep->type != FAT_DIRECTORY_ENTRY_TYPE_FILE) {
+        return -EBADF; // Bad file descriptor
+    }
+    uint32_t new_pos = 0;
+    switch (whence) {
+        case FILE_SEEK_SET:
+            new_pos = (uint32_t)offset;
+            break;
+        case FILE_SEEK_CUR:
+            new_pos = file_rep->current_pos + (uint32_t)offset;
+            break;
+        case FILE_SEEK_END:
+            // Not supported yet, as we don't have file size tracking implemented
+        default:
+            return -EINVAL; // Invalid argument
+    }
+    // Check for negative position
+    if ((int32_t)new_pos < 0) {
+        return -EINVAL; // Invalid argument
+    }
+    file_rep->current_pos = new_pos;
+    return 0; // Success
+}
+
+int fat16_stat(file_descriptor_t* fd, file_state_t* out_state) {
+    if (!fd || !fd->fs) {
+        return -EBADF; // Bad file descriptor
+    }
+    fat_file_directory_representation_t* file_rep = (fat_file_directory_representation_t*)fd->fs_private_data;
+    if (!file_rep || file_rep->type != FAT_DIRECTORY_ENTRY_TYPE_FILE) {
+        return -EBADF; // Bad file descriptor
+    }
+    fat_directory_entry_t* entry = file_rep->sfn_entry;
+    // In this implementation, files are read-only.
+    // For FAT write support, additional logic would be needed.
+    // However, from the learning-oriented perspective, reading from FAT16 is quite sufficient.
+    out_state->flags = FILE_STATE_READ_ONLY; // FAT16 files are read-only in this implementation
+    out_state->file_size = entry->file_size;
+    return 0; // Success
 }
 
 /**

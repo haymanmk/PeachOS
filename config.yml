@@ -1,4 +1,6 @@
 PeachOS:
+  brief: A lightweight operating system for educational purposes.
+  version: 1.0.0
   build_dir: build
   src_dir: src
   mount_dir: /mnt/peachos
