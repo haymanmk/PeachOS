@@ -13,6 +13,13 @@
 char tolower(char c);
 
 /**
+ * @brief Convert a character to uppercase.
+ * @param c The character to convert.
+ * @return The uppercase character.
+ */
+char toupper(char c);
+
+/**
  * @brief Copy a string from src to dest.
  * @param dest The destination buffer.
  * @param src The source string.

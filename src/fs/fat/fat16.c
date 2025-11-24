@@ -11,6 +11,7 @@ void* fat16_open(disk_t* disk, path_part_t* path_part, file_mode_t mode);
 size_t fat16_read(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer);
 int fat16_seek(file_descriptor_t* fd, int32_t offset, file_seek_mode_t whence);
 int fat16_stat(file_descriptor_t* fd, file_state_t* out_state);
+int fat16_close(file_descriptor_t* fd);
 
 static file_system_t fat16_fs = {
     .name = "FAT16",
@@ -18,7 +19,8 @@ static file_system_t fat16_fs = {
     .open = fat16_open,
     .read = fat16_read,
     .seek = fat16_seek,
-    .stat = fat16_stat
+    .stat = fat16_stat,
+    .close = fat16_close
 };
 
 /**
@@ -386,6 +388,10 @@ failed:
     return NULL; // Memory allocation error
 }
 
+/**
+ * @brief Free a FAT16 file/directory representation structure.
+ * @param representation Pointer to the FAT16 file/directory representation to free.
+ */
 void fat16_free_file_directory_representation(fat_file_directory_representation_t* representation) {
     if (representation) {
         // Free both directory and file entry if they exist
@@ -643,6 +649,17 @@ int fat16_stat(file_descriptor_t* fd, file_state_t* out_state) {
     // However, from the learning-oriented perspective, reading from FAT16 is quite sufficient.
     out_state->flags = FILE_STATE_READ_ONLY; // FAT16 files are read-only in this implementation
     out_state->file_size = entry->file_size;
+    return 0; // Success
+}
+
+int fat16_close(file_descriptor_t* fd) {
+    if (!fd || !fd->fs) {
+        return -EBADF; // Bad file descriptor
+    }
+    fat_file_directory_representation_t* file_rep = (fat_file_directory_representation_t*)fd->fs_private_data;
+    if (file_rep) {
+        fat16_free_file_directory_representation(file_rep);
+    }
     return 0; // Success
 }
 

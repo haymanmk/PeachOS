@@ -96,6 +96,19 @@ int file_new_descriptor(file_descriptor_t** out_fd) {
 }
 
 /**
+ * @brief Free a file descriptor and remove it from the descriptor table.
+ * @param fd Pointer to the file descriptor to free.
+ */
+void file_free_descriptor(file_descriptor_t* fd) {
+    if (fd && fd->id > 0 && fd->id <= FS_MAX_FILE_DESCRIPTORS) {
+        uint32_t index = fd->id - 1;
+        // Free the file descriptor structure
+        kheap_free(fd);
+        file_descriptors[index] = NULL; // Mark slot as free
+    }
+}
+
+/**
  * @brief Retrieve a file descriptor by its ID.
  * @param fd_id The ID of the file descriptor to retrieve.
  * @return Pointer to the file descriptor, or NULL if not found.
@@ -256,4 +269,17 @@ int file_seek(int fd_id, int32_t offset, file_seek_mode_t whence) {
         return -EBADF; // Bad file descriptor
     }
     return fd->fs->seek(fd, offset, whence);
+}
+
+int file_close(int fd_id) {
+    file_descriptor_t* fd = file_get_descriptor_by_id(fd_id);
+    if (!fd || !fd->fs || !fd->fs->close) {
+        return -EBADF; // Bad file descriptor
+    }
+    int res = fd->fs->close(fd);
+    if (res == ENONE) {
+        // Free the file descriptor slot
+        file_free_descriptor(fd);
+    }
+    return res;
 }

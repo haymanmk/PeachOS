@@ -129,6 +129,13 @@ void kernel_main() {
         if (file_stat(fd, &file_state) == 0) {
             printf("File size: %u bytes\n", file_state.file_size);
         }
+
+        // Close the file
+        if (file_close(fd) != 0) {
+            printf("Failed to close file descriptor: %d\n", fd);
+        } else {
+            printf("File descriptor %d closed successfully.\n", fd);
+        }
     }
 
     // Kernel main function implementation

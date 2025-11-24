@@ -42,6 +42,7 @@ typedef void*(*file_open_func_t)(disk_t* disk, path_part_t* path_part, file_mode
 typedef size_t(*file_read_func_t)(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer);
 typedef int(*file_seek_func_t)(file_descriptor_t* fd, int32_t offset, file_seek_mode_t whence);
 typedef int(*file_stat_func_t)(file_descriptor_t* fd, file_state_t* out_state);
+typedef int(*file_close_func_t)(file_descriptor_t* fd);
 
 // File system structure
 typedef struct file_system {
@@ -52,6 +53,7 @@ typedef struct file_system {
     file_read_func_t read;       // Function to read from a file in this file system.
     file_seek_func_t seek;       // Function to seek within a file in this file system.
     file_stat_func_t stat;       // Function to get file status information.
+    file_close_func_t close;     // Function to close a file in this file system.
 } file_system_t;
 
 // file descriptor structure
@@ -70,9 +72,9 @@ error_t file_insert_file_system(file_system_t* fs);
 file_system_t* file_system_resolve(disk_t* disk);
 
 int file_open(const char* path, const char* mode);
-int file_close(file_descriptor_t* fd);
 size_t file_read(void* buffer, size_t size, size_t nmemb, int fd_id);
 int file_seek(int fd_id, int32_t offset, file_seek_mode_t whence);
 int file_stat(int fd_id, file_state_t* out_state);
+int file_close(int fd_id);
 
 #endif // __FILE_H__

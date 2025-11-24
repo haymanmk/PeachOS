@@ -49,6 +49,13 @@ char tolower(char c) {
     return c;
 }
 
+char toupper(char c) {
+    if (c >= 'a' && c <= 'z') {
+        return c - ('a' - 'A');
+    }
+    return c;
+}
+
 int strncmp_ignore_case(const char* str1, const char* str2, size_t n) {
     size_t i;
     for (i = 0; i < n; i++) {
