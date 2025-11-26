@@ -4,11 +4,31 @@
 #include "io/io.h"
 #include "memory/heap/kheap.h"
 #include "memory/paging/paging.h"
+#include "memory/memory.h"
 #include "disk/disk.h"
 #include "disk/streamer.h"
 #include "fs/pparser.h"
+#include "gdt/gdt.h"
+#include "config.h"
+#include "task/tss.h"
 
 static paging_4gb_chunk_t* kernel_paging_chunk = NULL;
+
+gdt_entry_t gdt_entries[GDT_MAX_ENTRIES];
+gdt_structured_t structured_gdt[GDT_MAX_ENTRIES] = {
+    // Null segment
+    {.base = 0, .limit = 0, .type = 0},
+    // Kernel code segment
+    {.base = 0, .limit = 0xFFFFFFFF, .type = 0x9A},
+    // Kernel data segment
+    {.base = 0, .limit = 0xFFFFFFFF, .type = 0x92},
+    // User code segment
+    {.base = 0, .limit = 0xFFFFFFFF, .type = 0xFA},
+    // User data segment
+    {.base = 0, .limit = 0xFFFFFFFF, .type = 0xF2},
+    // TSS segment (not used in this example)
+    {.base = (uint32_t)&tss, .limit = sizeof(tss)-1, .type = 0x89}
+};
 
 void panic(const char* message) {
     printf("KERNEL PANIC: %s\n", message);
@@ -22,6 +42,12 @@ void kernel_main() {
     clear_screen();
     printf("Welcome to PeachOS!\n");
     printf("Kernel initialized successfully.\n");
+
+    // Initialize the Global Descriptor Table (GDT)
+    // Reset GDT entries
+    memset(&gdt_entries, 0, sizeof(gdt_entries));
+    gdt_init(gdt_entries, structured_gdt, GDT_MAX_ENTRIES);
+    gdt_load(gdt_entries, sizeof(gdt_entries) - 1);
 
     // Initialize the Interrupt Descriptor Table (IDT)
     idt_init();

@@ -1,12 +1,12 @@
 .section .asm
 .code32
 
-.global insb
-.global insw
-.global outsb
-.global outsw
+.global inb
+.global inw
+.global outb
+.global outw
 
-insb:
+inb:
     push %ebp
     mov %esp, %ebp
 
@@ -18,7 +18,7 @@ insb:
     pop %ebp
     ret
 
-insw:
+inw:
     push %ebp
     mov %esp, %ebp
 
@@ -30,7 +30,7 @@ insw:
     pop %ebp
     ret
 
-outsb:
+outb:
     push %ebp
     mov %esp, %ebp
 
@@ -42,7 +42,7 @@ outsb:
     pop %ebp
     ret
 
-outsw:
+outw:
     push %ebp
     mov %esp, %ebp
 

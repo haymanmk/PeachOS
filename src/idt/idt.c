@@ -15,7 +15,7 @@ void int21h_handler_c() {
     printf("Keyboard Interrupt Received (IRQ1)!\n");
 
     // Send End of Interrupt (EOI) signal to PICs
-    outsb(__PIC1_COMMAND_PORT, 0x20); // EOI to Master PIC
+    outb(__PIC1_COMMAND_PORT, 0x20); // EOI to Master PIC
 }
 
 idt_entry_t idt[IDT_SIZE];

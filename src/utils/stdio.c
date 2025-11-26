@@ -8,8 +8,8 @@ uint16_t vx = 0;
 uint16_t vy = 0;
 
 void disable_cursor() {
-    outsb(0x3D4, 0x0A);
-    outsb(0x3D5, 0x20);
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, 0x20);
 }
 
 uint16_t create_char(char c, uint8_t fg, uint8_t bg) {
