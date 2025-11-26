@@ -14,6 +14,8 @@
 
 static paging_4gb_chunk_t* kernel_paging_chunk = NULL;
 
+tss_t tss;
+
 gdt_entry_t gdt_entries[GDT_MAX_ENTRIES];
 gdt_structured_t structured_gdt[GDT_MAX_ENTRIES] = {
     // Null segment
@@ -49,14 +51,14 @@ void kernel_main() {
     gdt_init(gdt_entries, structured_gdt, GDT_MAX_ENTRIES);
     gdt_load(gdt_entries, sizeof(gdt_entries) - 1);
 
+    // Initialize the kernel heap
+    kheap_init();
+
     // Initialize the Interrupt Descriptor Table (IDT)
     idt_init();
 
     // Enable interrupts
     idt_enable_interrupts();
-
-    // Initialize the kernel heap
-    kheap_init();
 
     // Initialize file system module
     if (file_init() != ENONE) {
@@ -70,17 +72,13 @@ void kernel_main() {
         return;
     }
 
-    /**
-     * Testing disk read
-     */
-    disk_t* disk0 = disk_get_by_uid(0);
-    if (disk0) {
-        uint8_t buffer[DISK_SECTOR_SIZE]; // Buffer to hold one sector
-        if (disk_read_lba(disk0, 0, 1, buffer) == 0) {
-            printf("Read sector 0 from disk 0 successfully.\n");
-            printf("First byte of sector: \r\n");
-        }
-    }
+    // Setup TSS
+    memset(&tss, 0, sizeof(tss_t));
+    tss.ss0 = KERNEL_DATA_SELECTOR;
+    tss.esp0 = KERNEL_HEAP_ADDRESS + KERNEL_HEAP_SIZE_BYTES; // Stack pointer for kernel mode
+
+    // Load TSS segment into the task register
+    tss_load(0x28); // TSS segment selector is at index 5
 
     // Setup paging
     uint8_t paging_flags = PAGING_FLAG_PRESENT | PAGING_FLAG_WRITABLE | PAGING_FLAG_USER;

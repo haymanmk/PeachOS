@@ -15,15 +15,6 @@ static inline paging_descriptor_entry_t* paging_4gb_chunk_get_directory_address(
 }
 
 /**
- * @brief Check if an address is aligned to the page size.
- * @param address The address to check.
- * @return true if the address is aligned to the page size, false otherwise.
- */
-bool paging_is_aligned_to_page_size(uint32_t address) {
-    return (address % PAGE_SIZE) == 0;
-}
-
-/**
  * @brief Get the page directory and table indexes from a virtual address.
  * @param virtual_address The virtual address to translate.
  * @param directory_index Pointer to store the resulting page directory index.
@@ -139,3 +130,33 @@ int paging_map_virtual_address(
     return ENONE;
 }
 
+/**
+ * @brief Check if an address is aligned to the page size.
+ * @param address The address to check.
+ * @return true if the address is aligned to the page size, false otherwise.
+ */
+bool paging_is_aligned_to_page_size(uint32_t address) {
+    return (address % PAGE_SIZE) == 0;
+}
+
+/**
+ * @brief Free a 4GB paging chunk and its associated page tables.
+ * @param chunk Pointer to the paging 4GB chunk to free.
+ */
+void paging_free_4gb_chunk(paging_4gb_chunk_t* chunk) {
+    if (!chunk) {
+        return;
+    }
+
+    paging_descriptor_entry_t* page_directory = chunk->directory_ptr;
+    if (page_directory) {
+        for (uint32_t i = 0; i < PAGE_ENTRIES_PER_TABLE; i++) {
+            if (page_directory[i]) {
+                kheap_free((void*)(page_directory[i] & ~0xFFF));
+            }
+        }
+        kheap_free((void*)page_directory);
+    }
+
+    kheap_free((void*)chunk);
+}
