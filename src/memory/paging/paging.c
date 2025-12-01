@@ -100,10 +100,10 @@ void paging_switch_4gb_chunk(paging_4gb_chunk_t* chunk) {
 }
 
 /**
- * @brief Map a virtual address to a page frame in the given paging chunk.
+ * @brief Map a virtual address to a physical address in the given paging chunk.
  * @param chunk Pointer to the paging 4GB chunk.
  * @param virtual_address The virtual address to map (should be aligned to page size).
- * @param value The pointer to the page frame descriptor with flags.
+ * @param value The pointer to the physical address with flags.
  * @return ENONE on success, or -EINVAL on failure.
  */
 int paging_map_virtual_address(
@@ -125,6 +125,8 @@ int paging_map_virtual_address(
     if (!page_table) {
         return -EINVAL;
     }
+
+    // Set the new page frame with flags which stores the physical address and flags
     page_table[table_index] = value;
 
     return ENONE;
@@ -140,10 +142,22 @@ bool paging_is_aligned_to_page_size(uint32_t address) {
 }
 
 /**
+ * @brief Align an address to the nearest lower page size boundary.
+ * @param address Pointer to the address to align.
+ */
+void paging_align_address_to_page_size(uint32_t* address) {
+    if (!address) {
+        return;
+    }
+
+    *address = (*address / PAGE_SIZE) * PAGE_SIZE;
+}
+
+/**
  * @brief Free a 4GB paging chunk and its associated page tables.
  * @param chunk Pointer to the paging 4GB chunk to free.
  */
-void paging_free_4gb_chunk(paging_4gb_chunk_t* chunk) {
+void paging_4gb_chunk_free(paging_4gb_chunk_t* chunk) {
     if (!chunk) {
         return;
     }
@@ -159,4 +173,44 @@ void paging_free_4gb_chunk(paging_4gb_chunk_t* chunk) {
     }
 
     kheap_free((void*)chunk);
+}
+
+/**
+ * @brief Map a range of virtual addresses to physical addresses in the given paging chunk.
+ * @param chunk Pointer to the paging 4GB chunk.
+ * @param virtual_address_start The starting virtual address to map (should be aligned to page size).
+ * @param physical_address_start The starting physical address to map to (should be aligned to page size).
+ * @param size The size in bytes to map.
+ * @param flags The flags to set for each page.
+ * @return ENONE on success, or negative error code on failure.
+ */
+int paging_map_virtual_addresses(
+    paging_4gb_chunk_t* chunk,
+    uint32_t virtual_address_start,
+    uint32_t physical_address_start,
+    size_t size,
+    uint32_t flags) {
+    if (!chunk) {
+        return -EINVAL;
+    }
+
+    if (!paging_is_aligned_to_page_size(virtual_address_start) ||
+        !paging_is_aligned_to_page_size(physical_address_start)) {
+        return -EINVAL;
+    }
+
+    size_t pages_to_map = (size + PAGE_SIZE - 1) / PAGE_SIZE; // Round up to the nearest page
+
+    for (size_t i = 0; i < pages_to_map; i++) {
+        uint32_t virtual_address = virtual_address_start + (i * PAGE_SIZE);
+        uint32_t physical_address = physical_address_start + (i * PAGE_SIZE);
+        uint32_t value = physical_address | flags;
+
+        int res = paging_map_virtual_address(chunk, virtual_address, value);
+        if (res != ENONE) {
+            return res;
+        }
+    }
+
+    return ENONE;
 }

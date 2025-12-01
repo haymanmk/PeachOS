@@ -8,7 +8,8 @@
         "cstring": "c",
         "variant": "c",
         "string.h": "c",
-        "file.h": "c"
+        "file.h": "c",
+        "kheap.h": "c"
     },
     "editor.indentSize": "tabSize",
     "editor.tabSize": 4,

@@ -30,7 +30,9 @@ paging_4gb_chunk_t* paging_4gb_chunk_init(uint8_t flags);
 void paging_switch_4gb_chunk(paging_4gb_chunk_t* chunk);
 int paging_map_virtual_address(paging_4gb_chunk_t* chunk, uint32_t virtual_address, uint32_t value);
 bool paging_is_aligned_to_page_size(uint32_t address);
-void paging_free_4gb_chunk(paging_4gb_chunk_t* chunk);
+void paging_align_address_to_page_size(uint32_t* address);
+void paging_4gb_chunk_free(paging_4gb_chunk_t* chunk);
+int paging_map_virtual_addresses(paging_4gb_chunk_t* chunk, uint32_t virtual_address_start, uint32_t physical_address_start, size_t size, uint32_t flags);
 
 /**
  * @brief Enable paging by setting the appropriate control register.

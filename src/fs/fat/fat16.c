@@ -573,7 +573,7 @@ void* fat16_open(disk_t* disk, path_part_t* path_part, file_mode_t mode) {
  * @param size Size of each element to read. (in bytes)
  * @param nmemb Number of elements to read.
  * @param buffer Buffer to store the read data.
- * @return Number of elements read on success, negative error code on failure.
+ * @return Number of bytes read on success, negative error code on failure.
  */
 size_t fat16_read(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer) {
     if (!fd || !fd->fs) {
@@ -596,7 +596,7 @@ size_t fat16_read(file_descriptor_t* fd, size_t size, size_t nmemb, void* buffer
     }
     // Update current position
     file_rep->current_pos += (uint32_t)(size * nmemb);
-    return nmemb;
+    return (size * nmemb);
 }
 
 /**

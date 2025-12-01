@@ -36,7 +36,7 @@ BUILD_SUBDIRS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(sort $(C_DIRS) $(ASM_D
 # Define the mount directory for copying files
 MOUNT_DIR := /mnt/peachos
 
-all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
+all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN) user_programs
 	@echo "# Combine binaries into a single bootable image..."
 	rm -f $(BUILD_DIR)/$(OS_BIN)
 	dd if=$(BUILD_DIR)/$(BOOT_BIN) >> $(BUILD_DIR)/$(OS_BIN)
@@ -50,6 +50,8 @@ all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN)
 	sudo mkdir -p $(MOUNT_DIR)/config.d/sub
 	sudo cp ./config.yml $(MOUNT_DIR)/config.d/sub
 	sudo cp ./README.md $(MOUNT_DIR)
+	sudo mkdir -p $(MOUNT_DIR)/programs
+	sudo cp ./program/blank/build/blank.bin $(MOUNT_DIR)/programs/blank.bin
 	sudo umount $(MOUNT_DIR)
 	sudo rmdir $(MOUNT_DIR)
 
@@ -93,6 +95,11 @@ $(BUILD_DIR)/%.S.o: $(SRC_DIR)/%.S | $(BUILD_DIR)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	@echo "# Compiling $@"
 	$(CC) $(CC_FLAGS) -c -o $@ $<
+	@echo "\n"
+
+user_programs: 
+	@echo "# Building user programs..."
+	$(MAKE) -C program/blank PREFIX=$(PREFIX) TARGET=$(TARGET)
 	@echo "\n"
 
 clean:
