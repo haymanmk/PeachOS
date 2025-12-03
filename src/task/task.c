@@ -39,6 +39,33 @@ void task_list_remove(task_t* task) {
 }
 
 /**
+ * @brief Save the state of the given task from the interrupt stack frame.
+ * @param task Pointer to the task whose state is to be saved.
+ * @param frame Pointer to the interrupt stack frame containing the CPU state.
+ */
+void task_save_state(task_t* task, idt_interrupt_stack_frame_t* frame) {
+    if (!task || !frame) {
+        return;
+    }
+
+    // Save general-purpose registers
+    task->registers.edi = frame->edi;
+    task->registers.esi = frame->esi;
+    task->registers.ebp = frame->ebp;
+    task->registers.ebx = frame->ebx;
+    task->registers.edx = frame->edx;
+    task->registers.ecx = frame->ecx;
+    task->registers.eax = frame->eax;
+
+    // Save instruction pointer, code segment, flags, user stack pointer, and stack segment
+    task->registers.eip = frame->eip;
+    task->registers.cs = frame->cs;
+    task->registers.eflags = frame->eflags;
+    task->registers.user_esp = frame->user_esp;
+    task->registers.ss = frame->ss;
+}
+
+/**
  * @brief Initialize a new task structure.
  * @param task Pointer to the task structure to initialize.
  * @param process Pointer to the associated process.
@@ -171,6 +198,10 @@ int task_page() {
     return ENONE;
 }
 
+/**
+ * @brief Run the first ever task in the task list.
+ * This function switches to the first task and returns to user mode.
+ */
 void task_run_first_ever_task() {
     if (!task_list_head) {
         panic("No tasks available to run.");
@@ -179,4 +210,17 @@ void task_run_first_ever_task() {
     current_task = task_list_head;
     task_switch(current_task);
     task_return_to_user_mode(&current_task->registers);
+}
+
+/**
+ * @brief Save the current task's state from the interrupt stack frame.
+ * @param frame Pointer to the interrupt stack frame containing the CPU state.
+ */
+void task_save_current_state(idt_interrupt_stack_frame_t* frame) {
+    if (!current_task || !frame) {
+        return;
+    }
+
+    // Save the current task's state such as registers
+    task_save_state(current_task, frame);
 }

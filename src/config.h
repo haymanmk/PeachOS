@@ -12,6 +12,10 @@
 #define __PIC1_DATA_PORT 0x21
 #define __PIC1_VECTOR_OFFSET 0x20
 
+// System Call
+// ISR 0x80
+#define ISR80H_MAX_COMMANDS 1024 // Maximum number of system call commands for ISR 0x80
+
 /* GDT */
 #define GDT_MAX_ENTRIES 6
 #define RPL_KERNEL 0x0

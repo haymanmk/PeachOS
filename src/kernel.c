@@ -121,3 +121,13 @@ void kernel_main() {
         // Kernel loop
     }
 }
+
+void kernel_page() {
+    if (!kernel_paging_chunk) {
+        panic("Kernel paging chunk is not initialized.");
+    }
+    // Restore segment registers to the kernel data segment (DS, ES, FS, GS)
+    kernel_restore_segment_registers_to_kernel_data();
+    // Switch to the kernel paging chunk
+    paging_switch_4gb_chunk(kernel_paging_chunk);
+}

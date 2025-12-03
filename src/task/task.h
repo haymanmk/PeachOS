@@ -4,6 +4,7 @@
 #include "config.h"
 #include "process.h"
 #include "memory/paging/paging.h"
+#include "idt/idt.h"
 
 typedef struct process process_t; // Forward declaration
 
@@ -40,8 +41,8 @@ task_t* task_get_current();
 task_t* task_get_next();
 int task_switch(task_t* next_task);
 int task_page();
-
 void task_run_first_ever_task();
+void task_save_current_state(idt_interrupt_stack_frame_t* frame);
 
 /**
  * Returns to user mode from kernel mode or from an interrupt.

@@ -4,8 +4,8 @@
 
 .section .text
 
-.equ CODE_SEG, 0x08
-.equ DATA_SEG, 0x10
+.equ CODE_SEG, KERNEL_CODE_SELECTOR
+.equ DATA_SEG, KERNEL_DATA_SELECTOR
 
 # Only enable PIC1 (master PIC)
 .equ PIC1_CMD, __PIC1_COMMAND_PORT
@@ -15,6 +15,7 @@
 .extern kernel_main
 
 .global _start
+.global kernel_restore_segment_registers_to_kernel_data
 
 _start:
     # Initialize data segment registers
@@ -47,6 +48,15 @@ _start:
     call    kernel_main
 
     jmp    . # Infinite loop
+
+.type kernel_restore_segment_registers_to_kernel_data, @function
+kernel_restore_segment_registers_to_kernel_data:
+    movw    $DATA_SEG, %ax
+    movw    %ax, %ds
+    movw    %ax, %es
+    movw    %ax, %fs
+    movw    %ax, %gs
+    ret
 
 # padding to ensure minimum size
 # Without padding, this kernel code will impact the alignment of the subsequent sections,

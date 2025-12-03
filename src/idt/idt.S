@@ -2,33 +2,21 @@
 .code32
 .section .asm, "ax", @progbits  # Define .asm section as executable code
 
+.extern idt_isr80h_handler_c # External C handler for ISR 0x80
+
 ## Only for TEST: INT21h handler written in C.
 .extern int21h_handler_c
 .global int21h_handler_asm
 .type int21h_handler_asm, @function
 int21h_handler_asm:
-    # clear interrupt flag to prevent nested interrupts
-    cli
     # Push caller's 32-bit registers to save their state
-    pushl %eax
-    pushl %ebx
-    pushl %ecx
-    pushl %edx
-    pushl %esi
-    pushl %edi
-    pushl %ebp
+    pushal
     
     call int21h_handler_c
+
     # Restore caller's 32-bit registers
-    popl %ebp
-    popl %edi
-    popl %esi
-    popl %edx
-    popl %ecx
-    popl %ebx
-    popl %eax
-    # set interrupt flag to re-enable interrupts
-    sti
+    popal
+
     iret
 ### Only for TEST END
 
@@ -37,6 +25,7 @@ int21h_handler_asm:
 .global idt_enable_interrupts
 .global idt_disable_interrupts
 .global idt_interrupt_stub
+.global idt_isr80h_wrapper_asm
 
 .type idt_load, @function
 idt_load:
@@ -69,22 +58,45 @@ idt_interrupt_stub:
     # This is a generic interrupt stub that can be used for unhandled interrupts.
     # It simply acknowledges the interrupt and returns.
     # Save caller's general-purpose registers
-    pushl %eax
-    pushl %ebx
-    pushl %ecx
-    pushl %edx
-    pushl %esi
-    pushl %edi
-    pushl %ebp
+    pushal
     # Acknowledge the interrupt (send EOI to PIC)
     movb $0x20, %al
     outb %al, $0x20  # Send EOI to Master PIC
     # Restore caller's general-purpose registers
-    popl %ebp
-    popl %edi
-    popl %esi
-    popl %edx
-    popl %ecx
-    popl %ebx
-    popl %eax
+    popal
     iret  # Return from interrupt
+
+.type idt_isr80h_wrapper_asm, @function
+idt_isr80h_wrapper_asm: # void* (*c_handler)(int syscall_number, idt_interrupt_stack_frame_t* frame);
+    # This is the wrapper for software interrupt 0x80 (system call)
+    # The following registers have been pushed by the CPU automatically:
+    # EIP, CS, EFLAGS, ESP, SS (if privilege level change)
+    # We need to save the general-purpose registers as well.
+    pushal  # Push all 32-bit general-purpose registers
+
+    ### The end of interrupt frame is now set up. ###
+
+    # Push the pointer to the interrupt frame onto the stack
+    push %esp  # Push pointer to the interrupt frame
+
+    # Push the syscall number (in EAX) onto the stack
+    push %eax  # Push syscall number
+
+    # Call the C handler for ISR 0x80
+    call idt_isr80h_handler_c
+
+    # Save the return value from the C handler in a temporary location
+    movl %eax, temp_return_value
+    # Clean up the stack (remove syscall number and frame pointer)
+    addl $8, %esp
+
+    # Restore all 32-bit general-purpose registers
+    popal   # Pop all 32-bit general-purpose registers
+    # Move the return value from the temporary location back into EAX
+    movl temp_return_value, %eax
+    iret    # Return from interrupt
+
+.section .data
+.align 4
+temp_return_value: # Temporary storage for return value from C handler
+    .long 0

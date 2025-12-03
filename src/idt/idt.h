@@ -35,9 +35,41 @@ typedef struct IDTPointer {
     uint32_t base;          // Base address of the first element in the IDT
 } __attribute__((packed)) idt_ptr_t;
 
+/**
+ * @brief Structure representing the CPU state pushed onto the stack during an interrupt.
+ * @note  For 32-bit x86 architecture, the stack frame has 4-byte alignment.
+ *        The order of the registers is based on the sequence they are pushed in the assembly stubs.
+ *        For the details, refer to the interrupt handling assembly code.
+ */
+typedef struct idt_interrupt_stack_frame {
+    uint32_t edi;
+    uint32_t esi;
+    uint32_t ebp;
+    uint32_t esp; // Original ESP before pusha
+    uint32_t ebx;
+    uint32_t edx;
+    uint32_t ecx;
+    uint32_t eax;
+    uint32_t eip;
+    uint32_t cs;
+    uint32_t eflags;
+    uint32_t user_esp; // Only pushed when transitioning from user to kernel mode
+    uint32_t ss;       // Only pushed when transitioning from user to kernel mode
+} __attribute__((packed)) idt_interrupt_stack_frame_t;
+
+/**
+ * @brief Type definition for an interrupt handler function.
+ * @param frame Pointer to the interrupt stack frame.
+ * @return A void pointer (can be used to return values if needed).
+ */
+typedef void* (*idt_interrupt_handler_t)(idt_interrupt_stack_frame_t* frame);
+
 extern void idt_enable_interrupts();
 extern void idt_disable_interrupts();
 
 void idt_init();
+
+void* idt_isr80h_handler_c(int syscall_number, idt_interrupt_stack_frame_t* frame);
+void* idt_isr80h_handle_command(int command_number, idt_interrupt_stack_frame_t* frame);
 
 #endif // __IDT_H__

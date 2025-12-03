@@ -3,6 +3,8 @@
 #include "memory/memory.h"
 #include "utils/stdio.h"
 #include "io/io.h"
+#include "kernel.h"
+#include "task/task.h"
 
 // Define gate type for 32-bit interrupt gate with Ring 3 privilege and present bit set
 #define GATE_TYPE_INT_32 (IDT_GATE_TYPE_INT_GATE_32 | IDT_DPL_RING3 | IDT_PRESENT)
@@ -20,9 +22,11 @@ void int21h_handler_c() {
 
 idt_entry_t idt[IDT_SIZE];
 idt_ptr_t idt_ptr;
+static idt_interrupt_handler_t idt_interrupt_handlers[ISR80H_MAX_COMMANDS];
 
 extern void idt_load(uint32_t idt_ptr_address);
 extern void idt_interrupt_stub();
+extern void idt_isr80h_handler_asm(); // System call interrupt handler written in assembly
 
 void idt_div_by_zero_handler() {
     printf("Division by Zero Exception!\n");
@@ -60,6 +64,9 @@ void idt_set_gate(uint8_t interrupt_number, const uint32_t handler_address, uint
     idt[interrupt_number].offset_high = (uint16_t)((handler_address >> 16) & 0xFFFF);
 }
 
+/**
+ * @brief Initialize the Interrupt Descriptor Table (IDT) with default handlers.
+ */
 void idt_init() {
     // Initialize the Interrupt Descriptor Table (IDT)
     // This is a placeholder implementation
@@ -79,6 +86,52 @@ void idt_init() {
     // Example: Set keyboard interrupt handler (IRQ1)
     idt_set_gate(0x21, (uint32_t)int21h_handler_asm, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
 
+    // Set system call interrupt handler (ISR 0x80)
+    idt_set_gate(0x80, (uint32_t)idt_isr80h_handler_asm, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
+
     // Load the IDT using the lidt instruction
     idt_load((uint32_t)&idt_ptr);
+}
+
+/**
+ * @brief The ISR 0x80 handler in C for system calls.
+ * @param syscall_number The system call number. (mapped to commands or services)
+ * @param frame Pointer to the interrupt stack frame.
+ * @return A void pointer (can be used to return values if needed).
+ */
+void* idt_isr80h_handler_c(int syscall_number, idt_interrupt_stack_frame_t* frame) {
+    // Handle system call based on syscall_number
+    void* return_value = NULL;
+
+    // switch to kernel paging
+    kernel_page();
+
+    // Save the current task's state such as registers
+    task_save_current_state(frame);
+
+    // Process the system call
+    return_value = idt_isr80h_handle_command(syscall_number, frame);
+
+    // Retrun to user pageing after syscall handling
+    task_page();
+
+    return return_value;
+}
+
+/**
+ * @brief Retrieve and invoke the registered handler for a given system call command number.
+ * @param syscall_number The system call command number.
+ * @param frame Pointer to the interrupt stack frame.
+ * @return The return value from the invoked handler, or NULL if no handler is registered.
+ */
+void* idt_isr80h_handle_command(int syscall_number, idt_interrupt_stack_frame_t* frame) {
+    if (syscall_number < 0 || syscall_number >= ISR80H_MAX_COMMANDS) {
+        return NULL; // Invalid command number
+    }
+
+    idt_interrupt_handler_t handler = idt_interrupt_handlers[syscall_number];
+    if (handler) {
+        return handler(frame);
+    }
+    return NULL; // No handler registered for this command
 }
