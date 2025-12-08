@@ -36,6 +36,18 @@ void idt_div_by_zero_handler() {
     while (1);
 }
 
+void idt_page_fault_handler(idt_interrupt_stack_frame_t* frame, uint32_t faulting_address) {
+    panic("Page Fault Exception!");
+}
+
+void idt_control_protection_fault_handler(idt_interrupt_stack_frame_t* frame) {
+    printf("Control Protection Fault Exception!\n");
+    printf("EIP: 0x%X, CS: 0x%X, EFLAGS: 0x%X\n", frame->eip, frame->cs, frame->eflags);
+
+    // Halt the system or take appropriate action
+    while (1);
+}
+
 /**
  * @brief Sets an entry(gate descriptor) in the Interrupt Descriptor Table (IDT).
  * @param interrupt_number The interrupt number to set.
@@ -84,6 +96,12 @@ void idt_init() {
     // Assign interrupt handlers here
     idt_set_gate(0, (uint32_t)idt_div_by_zero_handler, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
 
+    // Page Fault Exception (ISR 14)
+    idt_set_gate(14, (uint32_t)idt_page_fault_handler, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
+
+    // Control Protection Fault Exception (ISR 21)
+    idt_set_gate(21, (uint32_t)idt_control_protection_fault_handler, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
+
     // Example: Set keyboard interrupt handler (IRQ1)
     idt_set_gate(0x21, (uint32_t)int21h_handler_asm, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
 
@@ -114,7 +132,7 @@ void* idt_isr80h_handler_c(int syscall_number, idt_interrupt_stack_frame_t* fram
     return_value = idt_isr80h_handle_command(syscall_number, frame);
 
     // Retrun to user pageing after syscall handling
-    task_page();
+    task_page_current();
 
     return return_value;
 }

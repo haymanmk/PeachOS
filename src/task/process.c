@@ -62,18 +62,42 @@ exit:
 }
 
 /**
- * @brief Map the process's binary into its virtual memory space.
+ * @brief Map the process's physical memory into its virtual memory space.
  * @param process Pointer to the process structure.
  * @return ENONE on success, negative error code on failure.
  */
-int process_map_binary_to_virt_memory(process_t* process) {
-    return paging_map_virtual_addresses(
+int process_map_memory(process_t* process) {
+    int res = 0;
+    // Map the binary to the predefined virtual address
+    res = paging_map_virtual_addresses(
         process->main_task->paging_chunk,
         PROGRAM_VIRTUAL_ADDRESS,
         (uint32_t)process->file_ptr,
         process->file_size,
         PAGING_FLAG_PRESENT | PAGING_FLAG_USER | PAGING_FLAG_WRITABLE
     );
+    if (res < 0) {
+        goto exit;
+    }
+
+    // Map the stack to the predefined virtual stack address.
+    // Stack grows downwards, so we map from bottom to top.
+    // After mapping, the C program can retrieve the arguments from the stack.
+    // The processor will set the stack pointer (ESP) to the top of the stack
+    // when switching to user mode.
+    res = paging_map_virtual_addresses(
+        process->main_task->paging_chunk,
+        PROGRAM_VIRTUAL_STACK_BOTTOM_ADDRESS,
+        (uint32_t)process->stack,
+        PROGRAM_VIRTUAL_STACK_SIZE_BYTES,
+        PAGING_FLAG_PRESENT | PAGING_FLAG_USER | PAGING_FLAG_WRITABLE
+    );
+    if (res < 0) {
+        goto exit;
+    }
+
+exit:
+    return res;
 }
 
 /**
@@ -149,16 +173,17 @@ int process_load_into_slot(const char* filename, process_t** out_process, uint16
         res = -ENOMEM;
         goto exit;
     }
-    // Map main task's physical memory to virtual address space
-    res = process_map_binary_to_virt_memory(process);
-    if (res < 0) {
-        goto exit;
-    }
 
     // Allocate stack for the process
     process->stack = kheap_zmalloc(PROGRAM_VIRTUAL_STACK_SIZE_BYTES);
     if (!process->stack) {
         res = -ENOMEM;
+        goto exit;
+    }
+
+    // Map main task's physical memory to virtual address space including binary and stack
+    res = process_map_memory(process);
+    if (res < 0) {
         goto exit;
     }
 

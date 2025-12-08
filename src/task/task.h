@@ -40,9 +40,12 @@ int task_free(task_t* task);
 task_t* task_get_current();
 task_t* task_get_next();
 int task_switch(task_t* next_task);
-int task_page();
+int task_page_current();
+int task_page_task(task_t* task);
 void task_run_first_ever_task();
 void task_save_current_state(idt_interrupt_stack_frame_t* frame);
+int task_copy_string_from_task(task_t* task, const char* src_virt_addr, char* dest_phys_addr, size_t max_length);
+void* task_get_stack_item(task_t* task, uint32_t index);
 
 /**
  * Returns to user mode from kernel mode or from an interrupt.

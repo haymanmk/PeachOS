@@ -47,9 +47,9 @@
 #define KERNEL_HEAP_TABLE_ADDRESS 0x00007E00
 
 // Stack for programs
-#define PROGRAM_VIRTUAL_ADDRESS 0x400000 // 4 MB
-#define PROGRAM_VIRTUAL_STACK_SIZE_BYTES (16 * 1024) // 16 KB
-#define PROGRAM_VIRTUAL_STACK_TOP_ADDRESS 0x3FF000 // Just below 4 MB
+#define PROGRAM_VIRTUAL_ADDRESS 0x400000 // 4 MB. Should be aligned to page size
+#define PROGRAM_VIRTUAL_STACK_SIZE_BYTES (16 * 1024) // 16 KB. Should be multiple of page size
+#define PROGRAM_VIRTUAL_STACK_TOP_ADDRESS 0x3FF000 // Just below 4 MB. Should be aligned to page size
 #define PROGRAM_VIRTUAL_STACK_BOTTOM_ADDRESS (PROGRAM_VIRTUAL_STACK_TOP_ADDRESS - PROGRAM_VIRTUAL_STACK_SIZE_BYTES)
 #define PROGRAM_MAX_ALLOCATIONS 1024 // Maximum number of memory allocations per program which can be tracked
 #define PROGRAM_MAX_PROCESSES 12 // Maximum number of processes in the system

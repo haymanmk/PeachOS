@@ -33,6 +33,7 @@ bool paging_is_aligned_to_page_size(uint32_t address);
 void paging_align_address_to_page_size(uint32_t* address);
 void paging_4gb_chunk_free(paging_4gb_chunk_t* chunk);
 int paging_map_virtual_addresses(paging_4gb_chunk_t* chunk, uint32_t virtual_address_start, uint32_t physical_address_start, size_t size, uint32_t flags);
+uint32_t paging_get_page_entry(paging_4gb_chunk_t* chunk, uint32_t virtual_address);
 
 /**
  * @brief Enable paging by setting the appropriate control register.

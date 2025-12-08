@@ -30,8 +30,8 @@ gdt_structured_t structured_gdt[GDT_MAX_ENTRIES] = {
     {.base = 0, .limit = 0xFFFFFFFF, .type = 0xFA},
     // User data segment
     {.base = 0, .limit = 0xFFFFFFFF, .type = 0xF2},
-    // TSS segment (not used in this example)
-    {.base = (uint32_t)&tss, .limit = sizeof(tss)-1, .type = 0x89}
+    // TSS segment
+    {.base = (uint32_t)&tss, .limit = sizeof(tss)-1, .type = 0xE9}
 };
 
 void panic(const char* message) {

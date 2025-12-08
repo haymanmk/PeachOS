@@ -28,7 +28,8 @@ typedef enum {
     ENOTFOUND = 5, // Not found
     ENOTDIR = 6, // Not a directory
     ENODATA = 7, // No data available
-    EBADF = 8 // Bad file descriptor
+    EBADF = 8, // Bad file descriptor
+    EFAULT = 9 // Operation failed
 } error_code_t;
 
 typedef int status_t;

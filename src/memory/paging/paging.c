@@ -214,3 +214,29 @@ int paging_map_virtual_addresses(
 
     return ENONE;
 }
+
+/**
+ * @brief Get the page table entry for a given virtual address in the specified paging chunk.
+ * @param chunk Pointer to the paging 4GB chunk.
+ * @param virtual_address The virtual address to look up.
+ * @return The page table entry value, or 0 if not found or on error.
+ */
+uint32_t paging_get_page_entry(paging_4gb_chunk_t* chunk, uint32_t virtual_address) {
+    if (!chunk) {
+        return 0;
+    }
+
+    uint32_t directory_index, table_index;
+    if (paging_get_indexes_from_address(virtual_address, &directory_index, &table_index) != ENONE) {
+        return 0;
+    }
+
+    // Remove the flags from the page table address first
+    paging_descriptor_entry_t* page_table =
+        (paging_descriptor_entry_t*)(chunk->directory_ptr[directory_index] & ~0xFFF);
+    if (!page_table) {
+        return 0;
+    }
+
+    return page_table[table_index];
+}
