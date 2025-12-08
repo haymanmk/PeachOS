@@ -5,6 +5,7 @@
 #include "io/io.h"
 #include "kernel.h"
 #include "task/task.h"
+#include "status.h"
 
 // Define gate type for 32-bit interrupt gate with Ring 3 privilege and present bit set
 #define GATE_TYPE_INT_32 (IDT_GATE_TYPE_INT_GATE_32 | IDT_DPL_RING3 | IDT_PRESENT)
@@ -134,4 +135,19 @@ void* idt_isr80h_handle_command(int syscall_number, idt_interrupt_stack_frame_t*
         return handler(frame);
     }
     return NULL; // No handler registered for this command
+}
+
+/**
+ * @brief Register a handler for a specific system call command number.
+ * @param command_number The system call command number.
+ * @param handler The handler function to register.
+ * @return 0 on success, negative error code on failure.
+ * @note This function can be used in files like isr80h.c to register command handlers.
+ */
+int idt_isr80h_register_handler(int command_number, idt_interrupt_handler_t handler) {
+    if (command_number < 0 || command_number >= ISR80H_MAX_COMMANDS) {
+        return -EINVAL; // Invalid command number
+    }
+    idt_interrupt_handlers[command_number] = handler;
+    return ENONE;
 }

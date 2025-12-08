@@ -12,6 +12,7 @@
 #include "config.h"
 #include "task/tss.h"
 #include "task/process.h"
+#include "isr80h/isr80h.h"
 
 static paging_4gb_chunk_t* kernel_paging_chunk = NULL;
 
@@ -88,18 +89,13 @@ void kernel_main() {
     // Switch to the new paging chunk
     paging_switch_4gb_chunk(kernel_paging_chunk);
 
-    // Mpping a virtual address to a page frame
-    uint32_t test_virtual_address = 0x00400000; // 4 MB
-    // Allocate a page frame from the kernel heap
-    void* test_page_frame = kheap_zmalloc(PAGE_SIZE);
-    int map_result = paging_map_virtual_address(kernel_paging_chunk, test_virtual_address, (uint32_t)test_page_frame | paging_flags);
-    if (map_result != ENONE) {
-        printf("Failed to map virtual address 0x%X\n", test_virtual_address);
-        return;
-    }
-
     // Enable paging
     paging_enable();
+
+    // Register ISR 0x80 commands
+    if (isr80h_register_commands() != ENONE) {
+        panic("Failed to register ISR 0x80 commands.");
+    }
 
     /**
      * At this point, paging is enabled. The kernel can now use virtual memory.

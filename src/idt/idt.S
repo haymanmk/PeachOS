@@ -25,7 +25,7 @@ int21h_handler_asm:
 .global idt_enable_interrupts
 .global idt_disable_interrupts
 .global idt_interrupt_stub
-.global idt_isr80h_wrapper_asm
+.global idt_isr80h_handler_asm
 
 .type idt_load, @function
 idt_load:
@@ -66,8 +66,8 @@ idt_interrupt_stub:
     popal
     iret  # Return from interrupt
 
-.type idt_isr80h_wrapper_asm, @function
-idt_isr80h_wrapper_asm: # void* (*c_handler)(int syscall_number, idt_interrupt_stack_frame_t* frame);
+.type idt_isr80h_handler_asm, @function
+idt_isr80h_handler_asm: # void* (*c_handler)(int syscall_number, idt_interrupt_stack_frame_t* frame);
     # This is the wrapper for software interrupt 0x80 (system call)
     # The following registers have been pushed by the CPU automatically:
     # EIP, CS, EFLAGS, ESP, SS (if privilege level change)

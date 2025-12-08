@@ -8,6 +8,6 @@ typedef enum {
     ISR80H_CMD_SUM,
 } isr80h_command_num_t;
 
-void isr80h_register_commands();
+int isr80h_register_commands();
 
 #endif // __ISR80H_H__
