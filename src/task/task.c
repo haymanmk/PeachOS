@@ -249,7 +249,7 @@ void task_save_current_state(idt_interrupt_stack_frame_t* frame) {
  * @param dest_phys_addr Destination physical address in the kernel space.
  * @param max_length Maximum length of the string to copy. (range: 1 to PAGE_SIZE)
  * @return ENONE on success, negative error code on failure.
- * @note This function may be executed in kernel mode. In order to copy data from user mode tasks,
+ * @note This function should be called in kernel mode. In order to copy data from user mode tasks,
  *       the paging must be temporarily switched to the task's paging chunk, and then switched back to kernel paging.
  *       A temporary buffer in kernel space is used as an intermediary to facilitate the copy operation.
  *       After the operation, the original page mapping is restored to maintain memory integrity.

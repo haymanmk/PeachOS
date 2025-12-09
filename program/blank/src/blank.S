@@ -3,12 +3,16 @@
 .global _start
 
 _start:
-    # Calling a system call to test ISR 0x80h handler with command number 0 (sum)
-    push $5             # First argument
-    push $10            # Second argument
-    movl $0, %eax        # Command number 0 (sum)
+    # Calling system call to print a message
+    pushl $message     # Push address of the message string
+    movl $1, %eax        # Command number 1: Print string
     int $0x80          # Trigger software interrupt 0x80
-    addl $8, %esp      # Clean up the stack (2 arguments * 4 bytes each)
+    addl $4, %esp      # Clean up the stack (1 arguments * 4 bytes each)
 
     .loop_start:
         jmp .loop_start  # Infinite loop
+
+.section .data
+.align 4
+message:
+    .asciz "I can talk to kernel.\n"
