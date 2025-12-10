@@ -16,9 +16,18 @@ typedef struct process {
     void* file_ptr; // File pointer to the executable file
     uint32_t file_size; // Size of the executable file
     void* stack; // Pointer to the process's stack
+
+    // Keyboard ring buffer to store keyboard input for this process
+    struct keyboard_buffer {
+        char buffer[KEYBOARD_BUFFER_SIZE];
+        uint32_t head;
+        uint32_t tail;
+    } keyboard;
 } process_t;
 
 int process_load(const char* filename, process_t** out_process);
 int process_load_into_slot(const char* filename, process_t** out_process, uint16_t process_slot);
+process_t* process_get_current();
+process_t* process_get_by_pid(uint16_t pid);
 
 #endif // __PROCESS_H__

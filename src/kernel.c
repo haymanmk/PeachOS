@@ -13,6 +13,7 @@
 #include "task/tss.h"
 #include "task/process.h"
 #include "isr80h/isr80h.h"
+#include "keyboard/keyboard.h"
 
 static paging_4gb_chunk_t* kernel_paging_chunk = NULL;
 
@@ -96,6 +97,9 @@ void kernel_main() {
     if (isr80h_register_commands() != ENONE) {
         panic("Failed to register ISR 0x80 commands.");
     }
+
+    // Initialize keyboard
+    keyboard_init();
 
     /**
      * At this point, paging is enabled. The kernel can now use virtual memory.

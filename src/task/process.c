@@ -205,3 +205,18 @@ exit:
     }
     return res;    
 }
+
+process_t* process_get_current() {
+    task_t* current_task = task_get_current();
+    if (!current_task) {
+        return NULL;
+    }
+    return current_task->process;
+}
+
+process_t* process_get_by_pid(uint16_t pid) {
+    if (pid >= PROGRAM_MAX_PROCESSES) {
+        return NULL;
+    }
+    return process_table[pid];
+}

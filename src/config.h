@@ -69,4 +69,7 @@
 #define FS_MAX_FILE_DESCRIPTORS 256
 #define FS_MAX_FILE_NAME_LENGTH 64
 
+/* Keyboard */
+#define KEYBOARD_BUFFER_SIZE 1024
+
 #endif // __CONFIG_H__
