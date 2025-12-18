@@ -3,14 +3,14 @@
 .global _start
 
 _start:
+_loop_start:
     # Get a character from the keyboard
-    # call get_keyboard_char
+    call get_keyboard_char
     pushl %eax          # Push the character onto the stack as an argument
     movl $3, %eax        # Command number 3: Put character to terminal
-    # int $0x80          # Trigger software interrupt 0x80
+    int $0x80          # Trigger software interrupt 0x80
     addl $4, %esp      # Clean up the stack (1 arguments * 4 bytes each)
 
-_loop_start:
     jmp _loop_start     # Repeat indefinitely
 
 get_keyboard_char:
