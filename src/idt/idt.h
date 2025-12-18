@@ -68,9 +68,6 @@ extern void idt_enable_interrupts();
 extern void idt_disable_interrupts();
 
 void idt_init();
-
-void* idt_isr80h_handler_c(int syscall_number, idt_interrupt_stack_frame_t* frame);
-void* idt_isr80h_handle_command(int command_number, idt_interrupt_stack_frame_t* frame);
-int idt_isr80h_register_handler(int command_number, idt_interrupt_handler_t handler);
+int idt_register_interrupt_handler(uint16_t interrupt_number, idt_interrupt_handler_t handler);
 
 #endif // __IDT_H__

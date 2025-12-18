@@ -12,7 +12,8 @@
 
 idt_entry_t idt[TOTAL_INTERRUPTS];
 idt_ptr_t idt_ptr;
-static idt_interrupt_handler_t idt_interrupt_handlers[ISR80H_MAX_COMMANDS];
+// Table of general interrupt handlers in C
+static idt_interrupt_handler_t idt_general_interrupt_handlers[TOTAL_INTERRUPTS];
 
 extern void idt_load(uint32_t idt_ptr_address);
 extern void idt_interrupt_stub();
@@ -36,6 +37,18 @@ void idt_control_protection_fault_handler(idt_interrupt_stack_frame_t* frame) {
 
 void idt_general_interrupt_handler_c(int interrupt_number, idt_interrupt_stack_frame_t* frame) {
     printf("General Interrupt Received! Interrupt Number: %d\n", interrupt_number);
+
+    // Switch to kernel paging
+    kernel_page();
+    // If there is a registered handler, call it
+    if (idt_general_interrupt_handlers[interrupt_number]) {
+        // Save the current task's state such as registers
+        task_save_current_state(frame);
+        // Call the registered handler
+        idt_general_interrupt_handlers[interrupt_number](frame);
+    }
+    // Return to user paging after interrupt handling
+    task_page_current();
 
     // Send End of Interrupt (EOI) signal to PICs
     if (interrupt_number >= __PIC1_VECTOR_OFFSET && interrupt_number < (__PIC1_VECTOR_OFFSET + 8)) {
@@ -109,60 +122,10 @@ void idt_init() {
     idt_load((uint32_t)&idt_ptr);
 }
 
-/**
- * @brief The ISR 0x80 handler in C for system calls.
- * @param syscall_number The system call number. (mapped to commands or services)
- * @param frame Pointer to the interrupt stack frame.
- * @return A void pointer (can be used to return values if needed).
- */
-void* idt_isr80h_handler_c(int syscall_number, idt_interrupt_stack_frame_t* frame) {
-    // Handle system call based on syscall_number
-    void* return_value = NULL;
-
-    // switch to kernel paging
-    kernel_page();
-
-    // Save the current task's state such as registers
-    task_save_current_state(frame);
-
-    // Process the system call
-    return_value = idt_isr80h_handle_command(syscall_number, frame);
-
-    // Retrun to user pageing after syscall handling
-    task_page_current();
-
-    return return_value;
-}
-
-/**
- * @brief Retrieve and invoke the registered handler for a given system call command number.
- * @param syscall_number The system call command number.
- * @param frame Pointer to the interrupt stack frame.
- * @return The return value from the invoked handler, or NULL if no handler is registered.
- */
-void* idt_isr80h_handle_command(int syscall_number, idt_interrupt_stack_frame_t* frame) {
-    if (syscall_number < 0 || syscall_number >= ISR80H_MAX_COMMANDS) {
-        return NULL; // Invalid command number
+int idt_register_interrupt_handler(uint16_t interrupt_number, idt_interrupt_handler_t handler) {
+    if (interrupt_number >= TOTAL_INTERRUPTS) {
+        return -EINVAL; // Invalid interrupt number
     }
-
-    idt_interrupt_handler_t handler = idt_interrupt_handlers[syscall_number];
-    if (handler) {
-        return handler(frame);
-    }
-    return NULL; // No handler registered for this command
-}
-
-/**
- * @brief Register a handler for a specific system call command number.
- * @param command_number The system call command number.
- * @param handler The handler function to register.
- * @return 0 on success, negative error code on failure.
- * @note This function can be used in files like isr80h.c to register command handlers.
- */
-int idt_isr80h_register_handler(int command_number, idt_interrupt_handler_t handler) {
-    if (command_number < 0 || command_number >= ISR80H_MAX_COMMANDS) {
-        return -EINVAL; // Invalid command number
-    }
-    idt_interrupt_handlers[command_number] = handler;
+    idt_general_interrupt_handlers[interrupt_number] = handler;
     return ENONE;
 }

@@ -6,7 +6,7 @@
 
 .section .asm, "ax", @progbits  # Define .asm section as executable code
 
-.extern idt_isr80h_handler_c # External C handler for ISR 0x80
+.extern isr80h_handler_c # External C handler for ISR 0x80
 .extern idt_general_interrupt_handler_c # External C handler for general interrupts
 
 .global idt_load
@@ -109,7 +109,7 @@ idt_isr80h_handler_asm: # void* (*c_handler)(int syscall_number, idt_interrupt_s
     push %eax  # Push syscall number
 
     # Call the C handler for ISR 0x80
-    call idt_isr80h_handler_c
+    call isr80h_handler_c
 
     # Save the return value from the C handler in a temporary location
     movl %eax, temp_return_value
