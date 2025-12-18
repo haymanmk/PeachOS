@@ -7,7 +7,8 @@
  * Note: __PIC1_VECTOR_OFFSET is used to remap the PIC interrupt vectors
  *       to avoid conflicts with Intel CPU exceptions (0-31).
  */
-#define TOTAL_INTERRUPTS 256 // Total number of interrupts (0-255)
+// I have no idea where ISR288 comes from which occurs continuously. This does cause issues with slowing down the system. So, we limit to 256.
+#define TOTAL_INTERRUPTS 256 // Total number of interrupts (0-255).
 #define __PIC1_COMMAND_PORT 0x20
 #define __PIC1_DATA_PORT 0x21
 #define __PIC1_VECTOR_OFFSET 0x20
