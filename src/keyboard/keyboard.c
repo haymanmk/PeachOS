@@ -98,6 +98,12 @@ void keyboard_push(char c) {
     if (!current_process) {
         return; // No current process
     }
+
+    // Ignore if c is null
+    if (c == '\0') {
+        return;
+    }
+
     // Modify the keyboard buffer of the current process
     // Check if buffer is full
     if (keyboard_increment_index(current_process->keyboard.tail) == current_process->keyboard.head) {

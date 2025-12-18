@@ -43,6 +43,14 @@ void panic(const char* message) {
     }
 }
 
+void* pic_timer_interrupt_handler(idt_interrupt_stack_frame_t* frame) {
+    printf("Timer Interrupt Received!\n");
+    // Acknowledge the PIC for the timer interrupt (IRQ0)
+    io_outb(__PIC1_COMMAND_PORT, 0x20); // Send End of Interrupt (EOI) to Master PIC
+    // You can add additional timer handling code here if needed
+    return NULL;
+}
+
 void kernel_main() {
     clear_screen();
     printf("Welcome to PeachOS!\n");
@@ -59,9 +67,6 @@ void kernel_main() {
 
     // Initialize the Interrupt Descriptor Table (IDT)
     idt_init();
-
-    // Enable interrupts
-    idt_enable_interrupts();
 
     // Initialize file system module
     if (file_init() != ENONE) {
@@ -93,6 +98,10 @@ void kernel_main() {
     // Enable paging
     paging_enable();
 
+    // Enable interrupts. This should be done after Kernel paging is enabled,
+    // because interrupt handlers expect kernel paging to be active.
+    // idt_enable_interrupts();
+
     // Register ISR 0x80 commands
     if (isr80h_register_commands() != ENONE) {
         panic("Failed to register ISR 0x80 commands.");
@@ -101,6 +110,10 @@ void kernel_main() {
     // Initialize keyboard
     keyboard_init();
 
+    idt_register_interrupt_handler(0x20, pic_timer_interrupt_handler); // Timer interrupt (IRQ0)
+
+    idt_enable_interrupts();
+
     /**
      * At this point, paging is enabled. The kernel can now use virtual memory.
      */
@@ -108,7 +121,7 @@ void kernel_main() {
     // Test loading programs
     printf("Loading user program 'blank.bin'...\n");
     process_t* user_process = NULL;
-    int load_result = process_load("0:/programs/blank.bin", &user_process);
+    int load_result = process_load_switch("0:/programs/blank.bin", &user_process);
     if (load_result != ENONE) {
         panic("Failed to load user program 'blank.bin'.");
     }

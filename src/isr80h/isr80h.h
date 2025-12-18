@@ -11,6 +11,8 @@ typedef void*(*isr80h_command_handler_t)(idt_interrupt_stack_frame_t* frame);
 typedef enum {
     ISR80H_CMD_SUM,
     ISR80H_CMD_PRINT,
+    ISR80H_CMD_GET_KEYBOARD_CHAR,
+    ISR80H_CMD_PUT_CHAR, // to terminal
 } isr80h_command_num_t;
 
 int isr80h_register_commands();

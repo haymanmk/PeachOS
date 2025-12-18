@@ -10,6 +10,7 @@ typedef struct keyboard_driver keyboard_driver_t;
 #define CLASSIC_I8042_STATUS_PORT 0x64
 #define CLASSIC_I8042_COMMAND_PORT 0x64
 #define CLASSIC_I8042_ENABLE_FIRST_PORT 0xAE
+#define CLASSIC_I8042_KEYBOARD_RELEASED_MASK 0x80
 
 // Classic keyboard driver initialization function
 keyboard_driver_t* classic_keyboard_driver_init();

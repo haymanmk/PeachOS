@@ -8,8 +8,21 @@ uint16_t vx = 0;
 uint16_t vy = 0;
 
 void disable_cursor() {
-    outb(0x3D4, 0x0A);
-    outb(0x3D5, 0x20);
+    io_outb(0x3D4, 0x0A);
+    io_outb(0x3D5, 0x20);
+}
+
+void handle_backspace() {
+    if (vx == 0 && vy == 0) {
+        return; // At the beginning of the screen
+    }
+    if (vx == 0) {
+        vy--;
+        vx = VIDEO_WIDTH - 1;
+    } else {
+        vx--;
+    }
+    put_char(vx, vy, ' ', 0x0F, 0x00); // Clear the character
 }
 
 uint16_t create_char(char c, uint8_t fg, uint8_t bg) {
@@ -36,6 +49,12 @@ void print_char(char c, uint8_t fg, uint8_t bg) {
     }
     if (c == '\r') {
         vx = 0;
+        return;
+    }
+
+    // handle backspace
+    if (c == '\b') {
+        handle_backspace();
         return;
     }
 

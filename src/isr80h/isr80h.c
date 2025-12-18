@@ -17,6 +17,8 @@ int isr80h_register_commands() {
     int res = 0;
     res += isr80h_register_handler(ISR80H_CMD_SUM, misc_isr80h_command_sum);
     res += isr80h_register_handler(ISR80H_CMD_PRINT, io_isr80h_command_print);
+    res += isr80h_register_handler(ISR80H_CMD_GET_KEYBOARD_CHAR, io_isr80h_command_get_keyboard_char);
+    res += isr80h_register_handler(ISR80H_CMD_PUT_CHAR, io_isr80h_command_put_char);
 
     return res;
 }

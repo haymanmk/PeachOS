@@ -69,5 +69,6 @@ extern void idt_disable_interrupts();
 
 void idt_init();
 int idt_register_interrupt_handler(uint16_t interrupt_number, idt_interrupt_handler_t handler);
+void idt_general_interrupt_handler_c(uint16_t interrupt_number, idt_interrupt_stack_frame_t* frame);
 
 #endif // __IDT_H__

@@ -1,6 +1,10 @@
 #ifndef __KEYBOARD_H__
 #define __KEYBOARD_H__
 
+#include "config.h"
+
+#define KEYBOARD_IDT_INTERRUPT_NUMBER (__PIC1_VECTOR_OFFSET + 1) // PIC IRQ1
+
 // Function pointer type for keyboard driver initialization
 typedef int (*keyboard_driver_init_func_t)();
 

@@ -206,6 +206,10 @@ exit:
     return res;    
 }
 
+/**
+ * @brief Get the currently running process.
+ * @return Pointer to the current process.
+ */
 process_t* process_get_current() {
     task_t* current_task = task_get_current();
     if (!current_task) {
@@ -214,9 +218,57 @@ process_t* process_get_current() {
     return current_task->process;
 }
 
+/**
+ * @brief Get a process by its PID.
+ * @param pid The process ID.
+ * @return Pointer to the process, or NULL if not found.
+ */
 process_t* process_get_by_pid(uint16_t pid) {
     if (pid >= PROGRAM_MAX_PROCESSES) {
         return NULL;
     }
     return process_table[pid];
+}
+
+/**
+ * @brief Switch to the specified process.
+ * @param process Pointer to the process to switch to.
+ * @return ENONE on success, negative error code on failure.
+ */
+int process_switch(process_t* process) {
+    if (!process || !process->main_task) {
+        return -EINVAL;
+    }
+
+    task_switch(process->main_task);
+    current_process = process;
+
+    return ENONE;
+}
+
+/**
+ * @brief Load a process from an executable file and switch to it.
+ * @param filename The path to the executable file.
+ * @param out_process Pointer to store the created process.
+ * @return ENONE on success, negative error code on failure.
+ */
+int process_load_switch(const char* filename, process_t** out_process) {
+    int res = 0;
+    process_t* process = NULL;
+
+    res = process_load(filename, &process);
+    if (res < 0) {
+        return res;
+    }
+
+    res = process_switch(process);
+    if (res < 0) {
+        return res;
+    }
+
+    if (out_process) {
+        *out_process = process;
+    }
+
+    return ENONE;
 }

@@ -19,21 +19,21 @@ static disk_t* disk_list = NULL; // Head of the linked list of disks
   */
 int disk_read_lba_ata(uint32_t lba, uint32_t count, void* buffer) {
     // Code to read sectors using LBA goes here
-    outb(0x1F6, (lba >> 24) | 0xE0); // Send LBA high bits and set bit 6 for LBA mode
-    outb(0x1F2, count); // Send the sector count
-    outb(0x1F3, (uint8_t)(lba & 0xFF)); // Send the low byte of LBA
-    outb(0x1F4, (uint8_t)(lba >> 8)); // Send the middle byte of LBA
-    outb(0x1F5, (uint8_t)(lba >> 16)); // Send the high byte of LBA
-    outb(0x1F7, 0x20); // Send the command to read sectors with retry
+    io_outb(0x1F6, (lba >> 24) | 0xE0); // Send LBA high bits and set bit 6 for LBA mode
+    io_outb(0x1F2, count); // Send the sector count
+    io_outb(0x1F3, (uint8_t)(lba & 0xFF)); // Send the low byte of LBA
+    io_outb(0x1F4, (uint8_t)(lba >> 8)); // Send the middle byte of LBA
+    io_outb(0x1F5, (uint8_t)(lba >> 16)); // Send the high byte of LBA
+    io_outb(0x1F7, 0x20); // Send the command to read sectors with retry
 
     // Wait for the disk to be ready and read the data into the buffer
     // This is a simplified example; proper error handling and waiting should be implemented
     for (uint32_t i = 0; i < count; i++) {
         // Wait for the disk to signal that data is ready
-        while ((inb(0x1F7) & 0x08) == 0);
+        while ((io_inb(0x1F7) & 0x08) == 0);
         // Read a sector (512 bytes)
         for (uint32_t j = 0; j < DISK_SECTOR_SIZE / 2; j++) {
-            ((uint16_t*)buffer)[i * (DISK_SECTOR_SIZE / 2) + j] = inw(0x1F0);
+            ((uint16_t*)buffer)[i * (DISK_SECTOR_SIZE / 2) + j] = io_inw(0x1F0);
         }
     }
 

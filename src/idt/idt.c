@@ -35,31 +35,6 @@ void idt_control_protection_fault_handler(idt_interrupt_stack_frame_t* frame) {
     panic("Control Protection Fault Exception!\n");
 }
 
-void idt_general_interrupt_handler_c(int interrupt_number, idt_interrupt_stack_frame_t* frame) {
-    printf("General Interrupt Received! Interrupt Number: %d\n", interrupt_number);
-
-    // Switch to kernel paging
-    kernel_page();
-    // If there is a registered handler, call it
-    if (idt_general_interrupt_handlers[interrupt_number]) {
-        // Save the current task's state such as registers
-        task_save_current_state(frame);
-        // Call the registered handler
-        idt_general_interrupt_handlers[interrupt_number](frame);
-    }
-    // Return to user paging after interrupt handling
-    task_page_current();
-
-    // Send End of Interrupt (EOI) signal to PICs
-    if (interrupt_number >= __PIC1_VECTOR_OFFSET && interrupt_number < (__PIC1_VECTOR_OFFSET + 8)) {
-        // IRQ from Master PIC
-        outb(__PIC1_COMMAND_PORT, 0x20); // EOI to Master PIC
-    } else if (interrupt_number >= __PIC2_VECTOR_OFFSET && interrupt_number < (__PIC2_VECTOR_OFFSET + 8)) {
-        // IRQ from Slave PIC
-        outb(__PIC2_COMMAND_PORT, 0x20); // EOI to Slave PIC
-        outb(__PIC1_COMMAND_PORT, 0x20); // EOI to Master PIC
-    }
-}
 
 /**
  * @brief Sets an entry(gate descriptor) in the Interrupt Descriptor Table (IDT).
@@ -128,4 +103,25 @@ int idt_register_interrupt_handler(uint16_t interrupt_number, idt_interrupt_hand
     }
     idt_general_interrupt_handlers[interrupt_number] = handler;
     return ENONE;
+}
+
+void idt_general_interrupt_handler_c(uint16_t interrupt_number, idt_interrupt_stack_frame_t* frame) {
+    printf("General Interrupt Received! Interrupt Number: %d\n", interrupt_number);
+
+    // Switch to kernel paging
+    kernel_page();
+    // If there is a registered handler, call it
+    if (idt_general_interrupt_handlers[interrupt_number]) {
+        // Save the current task's state such as registers
+        task_save_current_state(frame);
+        // Call the registered handler
+        idt_general_interrupt_handlers[interrupt_number](frame);
+    }
+    // Return to user paging after interrupt handling
+    task_page_current();
+    
+    // Send End of Interrupt (EOI) signal to PICs
+    // Note: No matter if the interrupt came from PIC or not,
+    // we have to send EOI to PICs to avoid blocking further interrupts.
+    io_outb(__PIC1_COMMAND_PORT, 0x20); // EOI to Master PIC
 }

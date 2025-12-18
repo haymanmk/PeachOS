@@ -1,6 +1,8 @@
 #include "classic.h"
 #include "status.h"
 #include "io/io.h"
+#include "keyboard/keyboard.h"
+#include "idt/idt.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -27,6 +29,7 @@ static uint8_t scancode_set_1[] = {
 };
 
 int classic_keyboard_init();
+void* classic_keyboard_handle_interrupt(idt_interrupt_stack_frame_t* frame);
 
 keyboard_driver_t classic_keyboard_driver = {
     .init = classic_keyboard_init,
@@ -37,7 +40,9 @@ keyboard_driver_t classic_keyboard_driver = {
 int classic_keyboard_init() {
     // Initialize the classic I8042 PS/2 Controller
     // Refer to https://wiki.osdev.org/I8042_PS/2_Controller for more details
-    outb(CLASSIC_I8042_COMMAND_PORT, CLASSIC_I8042_ENABLE_FIRST_PORT);
+    // Register keyboard interrupt handler in IDT
+    idt_register_interrupt_handler(KEYBOARD_IDT_INTERRUPT_NUMBER, classic_keyboard_handle_interrupt);
+    io_outb(CLASSIC_I8042_COMMAND_PORT, CLASSIC_I8042_ENABLE_FIRST_PORT);
     return ENONE;
 }
 
@@ -49,8 +54,22 @@ uint8_t classic_scancode_to_ascii(uint8_t scancode) {
     return 0; // Unknown scancode
 }
 
-void classic_keyboard_handle_interrupt() {
+void* classic_keyboard_handle_interrupt(idt_interrupt_stack_frame_t* frame) {
     // Handle keyboard interrupt
+    // We are in kernel mode and paging here
+    // Read scancode from data port
+    uint8_t scancode = io_inb(CLASSIC_I8042_DATA_PORT);
+    uint8_t ascii = classic_scancode_to_ascii(scancode);
+
+    // Ignore key releases
+    if (scancode & CLASSIC_I8042_KEYBOARD_RELEASED_MASK) {
+        return NULL;
+    }
+
+    if (ascii != 0) {
+        keyboard_push((char)ascii);
+    }
+    return NULL;
 }
 
 keyboard_driver_t* classic_keyboard_driver_init() {

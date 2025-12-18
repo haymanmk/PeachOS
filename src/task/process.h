@@ -29,5 +29,7 @@ int process_load(const char* filename, process_t** out_process);
 int process_load_into_slot(const char* filename, process_t** out_process, uint16_t process_slot);
 process_t* process_get_current();
 process_t* process_get_by_pid(uint16_t pid);
+int process_switch(process_t* process);
+int process_load_switch(const char* filename, process_t** out_process);
 
 #endif // __PROCESS_H__
