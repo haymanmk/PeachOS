@@ -10,24 +10,14 @@
 // Define gate type for 32-bit interrupt gate with Ring 3 privilege and present bit set
 #define GATE_TYPE_INT_32 (IDT_GATE_TYPE_INT_GATE_32 | IDT_DPL_RING3 | IDT_PRESENT)
 
-/**
- * Only for demostration purposes to detect the keyboard interrupt (IRQ1).
- */
-extern void int21h_handler_asm();
-void int21h_handler_c() {
-    printf("Keyboard Interrupt Received (IRQ1)!\n");
-
-    // Send End of Interrupt (EOI) signal to PICs
-    outb(__PIC1_COMMAND_PORT, 0x20); // EOI to Master PIC
-}
-
-idt_entry_t idt[IDT_SIZE];
+idt_entry_t idt[TOTAL_INTERRUPTS];
 idt_ptr_t idt_ptr;
 static idt_interrupt_handler_t idt_interrupt_handlers[ISR80H_MAX_COMMANDS];
 
 extern void idt_load(uint32_t idt_ptr_address);
 extern void idt_interrupt_stub();
 extern void idt_isr80h_handler_asm(); // System call interrupt handler written in assembly
+extern void* idt_general_interrupt_handler_table[TOTAL_INTERRUPTS]; // Table of general interrupt handlers implemented in assembly
 
 void idt_div_by_zero_handler() {
     printf("Division by Zero Exception!\n");
@@ -41,11 +31,21 @@ void idt_page_fault_handler(idt_interrupt_stack_frame_t* frame, uint32_t faultin
 }
 
 void idt_control_protection_fault_handler(idt_interrupt_stack_frame_t* frame) {
-    printf("Control Protection Fault Exception!\n");
-    printf("EIP: 0x%X, CS: 0x%X, EFLAGS: 0x%X\n", frame->eip, frame->cs, frame->eflags);
+    panic("Control Protection Fault Exception!\n");
+}
 
-    // Halt the system or take appropriate action
-    while (1);
+void idt_general_interrupt_handler_c(int interrupt_number, idt_interrupt_stack_frame_t* frame) {
+    printf("General Interrupt Received! Interrupt Number: %d\n", interrupt_number);
+
+    // Send End of Interrupt (EOI) signal to PICs
+    if (interrupt_number >= __PIC1_VECTOR_OFFSET && interrupt_number < (__PIC1_VECTOR_OFFSET + 8)) {
+        // IRQ from Master PIC
+        outb(__PIC1_COMMAND_PORT, 0x20); // EOI to Master PIC
+    } else if (interrupt_number >= __PIC2_VECTOR_OFFSET && interrupt_number < (__PIC2_VECTOR_OFFSET + 8)) {
+        // IRQ from Slave PIC
+        outb(__PIC2_COMMAND_PORT, 0x20); // EOI to Slave PIC
+        outb(__PIC1_COMMAND_PORT, 0x20); // EOI to Master PIC
+    }
 }
 
 /**
@@ -84,13 +84,13 @@ void idt_init() {
     // Initialize the Interrupt Descriptor Table (IDT)
     // This is a placeholder implementation
     // Actual IDT setup code would go here
-    memset(&idt, 0, sizeof(idt_entry_t) * IDT_SIZE);
-    idt_ptr.limit = sizeof(idt_entry_t) * IDT_SIZE - 1;
+    memset(&idt, 0, sizeof(idt_entry_t) * TOTAL_INTERRUPTS);
+    idt_ptr.limit = sizeof(idt_entry_t) * TOTAL_INTERRUPTS - 1;
     idt_ptr.base = (uint32_t)&idt;
 
     // Set up IDT entries with null handlers as stubs
-    for (uint16_t i = 0; i < IDT_SIZE; i++) {
-        idt_set_gate(i, (uint32_t)idt_interrupt_stub, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
+    for (uint16_t i = 0; i < TOTAL_INTERRUPTS; i++) {
+        idt_set_gate(i, (uint32_t)idt_general_interrupt_handler_table[i], KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
     }
 
     // Assign interrupt handlers here
@@ -101,9 +101,6 @@ void idt_init() {
 
     // Control Protection Fault Exception (ISR 21)
     idt_set_gate(21, (uint32_t)idt_control_protection_fault_handler, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
-
-    // Example: Set keyboard interrupt handler (IRQ1)
-    idt_set_gate(0x21, (uint32_t)int21h_handler_asm, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
 
     // Set system call interrupt handler (ISR 0x80)
     idt_set_gate(0x80, (uint32_t)idt_isr80h_handler_asm, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);

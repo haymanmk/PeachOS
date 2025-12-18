@@ -10,6 +10,7 @@
  */
 
 // Scancode set 1 mapping (partial)
+// Refer to https://wiki.osdev.org/PS/2_Keyboard#Scan_Code_Set_1
 static uint8_t scancode_set_1[] = {
     0x00, 0x1B, '1', '2', '3', '4', '5',
     '6', '7', '8', '9', '0', '-', '=',

@@ -7,10 +7,13 @@
  * Note: __PIC1_VECTOR_OFFSET is used to remap the PIC interrupt vectors
  *       to avoid conflicts with Intel CPU exceptions (0-31).
  */
-#define IDT_SIZE 256
+#define TOTAL_INTERRUPTS 512 // Total number of interrupts (0-511)
 #define __PIC1_COMMAND_PORT 0x20
 #define __PIC1_DATA_PORT 0x21
 #define __PIC1_VECTOR_OFFSET 0x20
+#define __PIC2_COMMAND_PORT 0xA0
+#define __PIC2_DATA_PORT 0xA1
+#define __PIC2_VECTOR_OFFSET (__PIC1_VECTOR_OFFSET + 8)
 
 // System Call
 // ISR 0x80

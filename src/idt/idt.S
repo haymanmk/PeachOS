@@ -1,31 +1,57 @@
 # Interrupt Descriptor Table (IDT) management
 .code32
+#include "config.h"
+
+.equ __TOTAL_INTERRUPTS, TOTAL_INTERRUPTS          # Number of interrupts in the system
+
 .section .asm, "ax", @progbits  # Define .asm section as executable code
 
 .extern idt_isr80h_handler_c # External C handler for ISR 0x80
-
-## Only for TEST: INT21h handler written in C.
-.extern int21h_handler_c
-.global int21h_handler_asm
-.type int21h_handler_asm, @function
-int21h_handler_asm:
-    # Push caller's 32-bit registers to save their state
-    pushal
-    
-    call int21h_handler_c
-
-    # Restore caller's 32-bit registers
-    popal
-
-    iret
-### Only for TEST END
-
+.extern idt_general_interrupt_handler_c # External C handler for general interrupts
 
 .global idt_load
 .global idt_enable_interrupts
 .global idt_disable_interrupts
 .global idt_interrupt_stub
 .global idt_isr80h_handler_asm
+.global idt_general_interrupt_handler_table
+
+### Macros
+.macro idt_interrupt_vector num
+    .align 4
+    .global idt_interrupt_\num
+    .type idt_interrupt_\num, @function
+    idt_interrupt_\num:
+        pushal                  # Save all 32-bit general-purpose registers
+        push %esp          # Push pointer to the interrupt stack frame
+        push $\num             # Push the interrupt vector number onto the stack
+        call idt_general_interrupt_handler_c # Call the C handler
+        addl $8, %esp          # Clean up the stack (remove vector number and frame pointer)
+        popal                   # Restore all 32-bit general-purpose registers
+        iret                    # Return from interrupt
+.endm
+
+# Macro to create an entry in the interrupt handler pointer table
+# By following the naming convention of idt_interrupt_<num>,
+# we can easily reference the correct handler.
+.macro idt_interrupt_array_entry num
+    .long idt_interrupt_\num
+.endm
+
+### Macros END
+
+# Alternate macro mode to allow more flexible syntax
+# such as using `%expr` to evaluate the expression `expr` and use the result as a string.
+# This is useful for generating labels dynamically.
+# To disable alternate macro mode, use `.noaltmacro`.
+.altmacro
+
+### Define interrupt handlers for vectors 0 to __TOTAL_INTERRUPTS-1 here
+.set i, 0
+.rept (__TOTAL_INTERRUPTS)
+    idt_interrupt_vector %i
+    .set i, (i + 1)
+.endr
 
 .type idt_load, @function
 idt_load:
@@ -100,3 +126,13 @@ idt_isr80h_handler_asm: # void* (*c_handler)(int syscall_number, idt_interrupt_s
 .align 4
 temp_return_value: # Temporary storage for return value from C handler
     .long 0
+
+### Define the interrupt handler table
+.section .data
+.align 4
+idt_general_interrupt_handler_table:
+    .set i, 0
+    .rept __TOTAL_INTERRUPTS
+        idt_interrupt_array_entry %i
+        .set i, (i + 1)
+    .endr
