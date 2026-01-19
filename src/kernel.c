@@ -109,7 +109,7 @@ void kernel_main() {
     // Test loading programs
     printf("Loading user program 'blank.bin'...\n");
     process_t* user_process = NULL;
-    int load_result = process_load_switch("0:/programs/blank.bin", &user_process);
+    int load_result = process_load_switch("0:/programs/blank.elf", &user_process);
     if (load_result != ENONE) {
         panic("Failed to load user program 'blank.bin'.");
     }

@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all gdb_debug clean
 
 OS_BIN := peachos.bin
 BOOT_BIN := boot.bin
@@ -100,7 +100,13 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 user_programs: 
 	@echo "# Building user programs..."
 	$(MAKE) -C program/blank PREFIX=$(PREFIX) TARGET=$(TARGET)
+	$(MAKE) -C program/stdlib PREFIX=$(PREFIX) TARGET=$(TARGET)
 	@echo "\n"
+
+gdb_debug:
+	@echo "\nStarting GDB..."
+	gdb -ex "add-symbol-file $(BUILD_DIR)/kernel.elf 0x00100000" \
+	    -ex "target remote | qemu-system-i386 -S -gdb stdio -hda ${BUILD_DIR}/$(OS_BIN)"
 
 clean:
 	@echo "# Cleaning up..."

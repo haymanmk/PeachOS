@@ -108,14 +108,14 @@ int process_map_elf32(process_t* process) {
         // Calculate aligned addresses and sizes
         void* vaddr_start = ELF32_LOADER_PAGE_START((void*)(uintptr_t)pheader->p_vaddr);
         void* vaddr_end = ELF32_LOADER_PAGE_END((void*)(uintptr_t)(pheader->p_vaddr + pheader->p_memsz));
+        void* paddr_start = ELF32_LOADER_PAGE_START((void*)((uintptr_t)(elf_file->elf_data) + (pheader->p_offset)));
         size_t mapping_size = (uintptr_t)vaddr_end - (uintptr_t)vaddr_start;
-        uintptr_t offset_in_page = ELF32_LOADER_PAGE_OFFSET((void*)(uintptr_t)pheader->p_vaddr);
 
         // Map the segment into the process's virtual memory
         res = paging_map_virtual_addresses(
             process->main_task->paging_chunk,
             (uint32_t)vaddr_start,
-            (uint32_t)(elf_file->physical_base_address + (pheader->p_offset - offset_in_page)),
+            (uint32_t)paddr_start,
             mapping_size,
             PAGING_FLAG_PRESENT | PAGING_FLAG_USER | 
             ((pheader->p_flags & PF_W) ? PAGING_FLAG_WRITABLE : 0)

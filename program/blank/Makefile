@@ -38,7 +38,7 @@ $(BUILD_DIR):
 
 $(TARGET_BIN): $(ASM_OBJS) $(C_OBJS)
 	@echo "# Linking $@ ..."
-	$(LD) $(LDFLAGS) -Map=$(BUILD_DIR)/$(TARGET_BIN).map -o $(BUILD_DIR)/$(TARGET_NAME).elf $^
+	$(LD) $(LDFLAGS) -Map=$(BUILD_DIR)/$(TARGET_BIN).map -o $(BUILD_DIR)/$(TARGET_NAME).elf $^ -L../stdlib/build -lstdlib
 	@echo "# Generating binary file..."
 	$(OBJCOPY) -O binary $(BUILD_DIR)/$(TARGET_NAME).elf $(BUILD_DIR)/$(TARGET_BIN)
 	@echo "\n"
