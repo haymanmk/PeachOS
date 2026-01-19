@@ -6,6 +6,7 @@
 #include "config.h"
 #include "kernel.h"
 #include "utils/string.h"
+#include "loader/formats/elf32_loader.h"
 
 /**
  * A linked list to hold all tasks in the system.
@@ -86,7 +87,9 @@ int task_init(task_t* task, process_t* process) {
         return -ENOMEM;
     }
     // Initialize registers as necessary
-    task->registers.eip = PROGRAM_VIRTUAL_ADDRESS; // Entry point
+    task->registers.eip = (process->file_type == PROCESS_FILE_TYPE_ELF32) ?
+                          (ELF32_LOADER_ELF_HEADER(process->elf32_file)->e_entry) : // Entry point from ELF32 header
+                          PROGRAM_VIRTUAL_ADDRESS; // Default entry point
     task->registers.ss = USER_DATA_SELECTOR | RPL_USER;
     task->registers.cs = USER_CODE_SELECTOR | RPL_USER;
     task->registers.user_esp = PROGRAM_VIRTUAL_STACK_TOP_ADDRESS; // User stack pointer

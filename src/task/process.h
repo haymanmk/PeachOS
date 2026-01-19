@@ -3,9 +3,14 @@
 
 #include "task.h"
 #include "config.h"
+#include "loader/formats/elf32_loader.h"
 #include <stdint.h>
 
 typedef struct task task_t; // Forward declaration
+typedef enum {
+    PROCESS_FILE_TYPE_ELF32=0,
+    PROCESS_FILE_TYPE_BINARY=1,
+} process_file_type_t;
 
 typedef struct process {
     // Define process-related fields here
@@ -13,7 +18,13 @@ typedef struct process {
     char filename[256]; // Executable filename
     task_t* main_task; // Pointer to the main task of the process
     void* mem_alloc[PROGRAM_MAX_ALLOCATIONS]; // Track memory allocations (malloc) which need to be freed on process termination
-    void* file_ptr; // File pointer to the executable file
+
+    process_file_type_t file_type; // Type of the executable file (e.g., ELF, etc.)
+    union {
+        void* file_ptr; // File pointer to the executable file
+        elf32_loader_file_t* elf32_file; // Pointer to ELF loader structure if ELF32 file is used
+    };
+
     uint32_t file_size; // Size of the executable file
     void* stack; // Pointer to the process's stack
 

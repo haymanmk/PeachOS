@@ -51,7 +51,7 @@ all: $(BUILD_DIR) $(BOOT_BIN) $(KERNEL_BIN) user_programs
 	sudo cp ./config.yml $(MOUNT_DIR)/config.d/sub
 	sudo cp ./README.md $(MOUNT_DIR)
 	sudo mkdir -p $(MOUNT_DIR)/programs
-	sudo cp ./program/blank/build/blank.bin $(MOUNT_DIR)/programs/blank.bin
+	sudo cp ./program/blank/build/blank.elf $(MOUNT_DIR)/programs/
 	sudo umount $(MOUNT_DIR)
 	sudo rmdir $(MOUNT_DIR)
 

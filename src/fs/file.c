@@ -248,6 +248,12 @@ size_t file_read(void* buffer, size_t size, size_t nmemb, int fd_id) {
     return fd->fs->read(fd, size, nmemb, buffer);
 }
 
+/**
+ * @brief Get the status of a file descriptor.
+ * @param fd_id The file descriptor ID to get status for.
+ * @param out_state Pointer to store the file state information.
+ * @return 0 on success, negative error code on failure.
+ */
 int file_stat(int fd_id, file_state_t* out_state) {
     file_descriptor_t* fd = file_get_descriptor_by_id(fd_id);
     if (!fd || !fd->fs || !fd->fs->stat) {

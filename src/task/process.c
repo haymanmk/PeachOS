@@ -5,6 +5,7 @@
 #include "task/task.h"
 #include "utils/string.h"
 #include "fs/file.h"
+#include "kernel.h"
 
 process_t* current_process = NULL; // Pointer to the currently running process
 static process_t* process_table[PROGRAM_MAX_PROCESSES]; // Fixed-size process table
@@ -62,20 +63,105 @@ exit:
 }
 
 /**
- * @brief Map the process's physical memory into its virtual memory space.
+ * @brief Load an ELF32 executable file into the process structure.
+ * @param filename The path to the ELF32 executable file.
  * @param process Pointer to the process structure.
  * @return ENONE on success, negative error code on failure.
  */
-int process_map_memory(process_t* process) {
+static int process_load_elf32(const char* filename, process_t* process) {
     int res = 0;
+    elf32_loader_file_t* elf_file = NULL;
+
+    // Load the ELF32 file using the ELF32 loader
+    res = elf32_loader_load(filename, &elf_file);
+    if (res < 0) {
+        return res; // Propagate error code
+    }
+
+    // Populate the process structure with ELF file information
+    process->file_type = PROCESS_FILE_TYPE_ELF32;
+    process->elf32_file = elf_file;
+    process->file_size = elf_file->in_memory_size;
+
+    return ENONE;
+}
+
+int process_map_elf32(process_t* process) {
+    int res = 0;
+    elf32_loader_file_t* elf_file = process->elf32_file;
+    elf32_header_t* elf_header = ELF32_LOADER_ELF_HEADER(elf_file);
+    elf32_program_header_t* pheader_table = ELF32_LOADER_PROGRAM_HEADER_TABLE(elf_file);
+
+    // Map each loadable segment into the process's virtual memory
+    for (uint16_t i = 0; i < elf_header->e_phnum; i++) {
+        elf32_program_header_t* pheader = &pheader_table[i];
+        if (pheader->p_type != PT_LOAD) {
+            continue; // Skip non-loadable segments
+        }
+
+        /**
+         * ELF file has been loaded into physical memory already,
+         * which has been partitioned into page frames.
+         * Now we need to map these physical addresses into the process's virtual memory space
+         * and align them to page boundaries.
+         */
+        // Calculate aligned addresses and sizes
+        void* vaddr_start = ELF32_LOADER_PAGE_START((void*)(uintptr_t)pheader->p_vaddr);
+        void* vaddr_end = ELF32_LOADER_PAGE_END((void*)(uintptr_t)(pheader->p_vaddr + pheader->p_memsz));
+        size_t mapping_size = (uintptr_t)vaddr_end - (uintptr_t)vaddr_start;
+        uintptr_t offset_in_page = ELF32_LOADER_PAGE_OFFSET((void*)(uintptr_t)pheader->p_vaddr);
+
+        // Map the segment into the process's virtual memory
+        res = paging_map_virtual_addresses(
+            process->main_task->paging_chunk,
+            (uint32_t)vaddr_start,
+            (uint32_t)(elf_file->physical_base_address + (pheader->p_offset - offset_in_page)),
+            mapping_size,
+            PAGING_FLAG_PRESENT | PAGING_FLAG_USER | 
+            ((pheader->p_flags & PF_W) ? PAGING_FLAG_WRITABLE : 0)
+        );
+        if (res < 0) {
+            return res;
+        }
+    }
+
+    return ENONE;
+}
+
+int process_map_binary(process_t* process) {
     // Map the binary to the predefined virtual address
-    res = paging_map_virtual_addresses(
+    return paging_map_virtual_addresses(
         process->main_task->paging_chunk,
         PROGRAM_VIRTUAL_ADDRESS,
         (uint32_t)process->file_ptr,
         process->file_size,
         PAGING_FLAG_PRESENT | PAGING_FLAG_USER | PAGING_FLAG_WRITABLE
     );
+}
+
+/**
+ * @brief Map the process's physical memory into its virtual memory space.
+ * @param process Pointer to the process structure.
+ * @return ENONE on success, negative error code on failure.
+ */
+int process_map_memory(process_t* process) {
+    int res = 0;
+
+    // Map the executable based on its file type
+    switch(process->file_type) {
+        case PROCESS_FILE_TYPE_ELF32:
+            // Map ELF32 segments
+            res = process_map_elf32(process);
+            break;
+        case PROCESS_FILE_TYPE_BINARY:
+            // Map binary executable
+            res = process_map_binary(process);
+            break;
+        default:
+            // Fetal error, panic the kernel
+            panic("Unsupported process file type in process_map_memory.");
+    }
+    
     if (res < 0) {
         goto exit;
     }
@@ -162,7 +248,11 @@ int process_load_into_slot(const char* filename, process_t** out_process, uint16
     strncpy(process->filename, filename, sizeof(process->filename) - 1);
 
     // Load the executable file into memory and populate the process structure, i.e. file_ptr and file_size
-    res = process_load_binary(filename, process);
+    res = process_load_elf32(filename, process);
+    if (res == -EEXEFORMAT) {
+        // Not an ELF32 file, try loading as binary (Fallback)
+        res = process_load_binary(filename, process);
+    }
     if (res < 0) {
         goto exit;
     }

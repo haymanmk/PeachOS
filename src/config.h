@@ -33,10 +33,10 @@
 
 /* Memory */
 // Paging
-#define PAGE_DIRECTORY_SIZE 4096
-#define PAGE_TABLE_SIZE 4096
-#define PAGE_SIZE 4096
-#define PAGE_ENTRIES_PER_TABLE 1024
+#define PAGE_DIRECTORY_SIZE (1 << 12) // 4096
+#define PAGE_TABLE_SIZE (1 << 12) // 4096
+#define PAGE_SIZE (1 << 12) // 4096
+#define PAGE_ENTRIES_PER_TABLE (1 << 10) // 1024
 
 // Kernel Heap
 // Allocate 100 MB for the kernel heap
