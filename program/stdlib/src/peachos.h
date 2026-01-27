@@ -8,4 +8,11 @@
  */
 void print(const char* str);
 
+/**
+ * @brief Get a character from the keyboard input.
+ * @return The character read from the keyboard.
+ * @note This is implemented in assembly.
+ */
+char getchar();
+
 #endif // __PEACHOS_H__
