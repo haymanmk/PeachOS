@@ -46,7 +46,7 @@ $(TARGET_BIN): $(ASM_OBJS) $(C_OBJS)
 $(BUILD_DIR)/%.S.o: $(SRC_DIR)/%.S
 	@echo "\nAssembling $< ..."
 	# Preprocess and assemble
-	$(CC) -E -P $(C_INCLUDES_FLAGS) $< | $(AS) $(ASFLAGS) $(C_INCLUDES_FLAGS) -o $@ -
+	$(CC) $(CC_FLAGS) -c -o $@ $<
 
 # Build rules for C files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c

@@ -1,7 +1,9 @@
 .code32
 
-.equ SYS_PRINT, 1
-.equ ISR80H, 0x80
+#include "isr80h/isr80h.h"
+
+.equ SYS_PRINT, ISR80H_CMD_PRINT
+.equ ISR80H, ISR80H_INTERRUPT_NUMBER
 
 .section .asm
 .global print
