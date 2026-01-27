@@ -5,13 +5,16 @@ TARGET_BIN := $(TARGET_NAME).a
 BUILD_DIR := build
 SRC_DIR := src
 C_INCLUDES := $(SRC_DIR)
+KERNEL_LIB_DIR := ../../src/
+C_INCLUDES += $(KERNEL_LIB_DIR)
+C_INCLUDES_FLAGS := $(addprefix -I,$(C_INCLUDES))
 
 AS := $(PREFIX)/bin/$(TARGET)-as
 ASFLAGS := -g -gdwarf-2
 LD := $(PREFIX)/bin/$(TARGET)-ld
 LDFLAGS := -T $(SRC_DIR)/linker.ld --oformat=elf32-i386 -relocatable
 CC := $(PREFIX)/bin/$(TARGET)-gcc
-CC_FLAGS := -g -O0 -ffreestanding -nostdlib -fpic -I$(C_INCLUDES) -Wall
+CC_FLAGS := $(C_INCLUDES_FLAGS) -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall
 OBJCOPY := $(PREFIX)/bin/$(TARGET)-objcopy
 OBJDUMP := $(PREFIX)/bin/$(TARGET)-objdump
 
@@ -24,7 +27,7 @@ ASM_DIRS := $(sort $(dir $(ASM_SRCS)))
 C_DIRS := $(sort $(dir $(C_SRCS)))
 BUILD_SUBDIRS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(sort $(ASM_DIRS) $(C_DIRS)))
 
-all: ${BUILD_DIR} $(TARGET_BIN)
+all: clean ${BUILD_DIR} $(TARGET_BIN)
 	@echo "/********************************\n"
 	@echo "Build complete: $(BUILD_DIR)/$(TARGET_BIN) \n"
 	@echo "********************************/\n"
@@ -43,7 +46,7 @@ $(TARGET_BIN): $(ASM_OBJS) $(C_OBJS)
 $(BUILD_DIR)/%.S.o: $(SRC_DIR)/%.S
 	@echo "\nAssembling $< ..."
 	# Preprocess and assemble
-	$(CC) -E -P -I$(C_INCLUDES) $< | $(AS) $(ASFLAGS) -I$(C_INCLUDES) -o $@ -
+	$(CC) -E -P $(C_INCLUDES_FLAGS) $< | $(AS) $(ASFLAGS) $(C_INCLUDES_FLAGS) -o $@ -
 
 # Build rules for C files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c

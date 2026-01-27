@@ -99,8 +99,8 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 
 user_programs: 
 	@echo "# Building user programs..."
-	$(MAKE) -C program/blank PREFIX=$(PREFIX) TARGET=$(TARGET)
 	$(MAKE) -C program/stdlib PREFIX=$(PREFIX) TARGET=$(TARGET)
+	$(MAKE) -C program/blank PREFIX=$(PREFIX) TARGET=$(TARGET)
 	@echo "\n"
 
 gdb_debug:

@@ -1,5 +1,11 @@
 #include "config.h"
 
+/**
+ * Kernel entry point and initialization code.
+ * This kernel code will be placed in first sector of disk image (512 bytes)
+ * which is loaded by the bootloader at address 0x00100000 (1 MB).
+ */
+
 .code32
 
 .section .text

@@ -116,6 +116,7 @@ print_char:
 
 # Protected mode code segment, 32-bit
 .code32
+###### NOTE: The kernel is loaded at 1 MB (0x00100000) ######
 pm_start:
     # read kernel from disk
     movl    $0x01, %eax        # LBA of the first sector to read (sector 1)

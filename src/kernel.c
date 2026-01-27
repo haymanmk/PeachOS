@@ -105,6 +105,30 @@ void kernel_main() {
     /**
      * At this point, paging is enabled. The kernel can now use virtual memory.
      */
+    int var = 42; // The address of this variable shoould be in physical address space
+    printf("Paging is enabled. Variable address: 0x%x, value: %d\n", &var, var);
+    // Allocate memory using kernel heap
+    void* heap_memory = kheap_zmalloc(1024); // Allocate 1 KB
+    if (!heap_memory) {
+        panic("Kernel heap allocation failed.");
+    }
+    // Manually create a pointer whose address is in virtual address space
+    int* virt_ptr = (int*)(0xC0000000); // Example virtual address
+    // Let's see if we try to access this virtual address without mapping.
+    // This should cause a page fault.
+    // Comment the following line to test page fault handling.
+    paging_map_virtual_addresses(
+        kernel_paging_chunk,
+        (uint32_t)virt_ptr,
+        (uint32_t)heap_memory,
+        sizeof(int),
+        PAGING_FLAG_PRESENT | PAGING_FLAG_WRITABLE
+    );
+    *virt_ptr = 123; // This should cause a page fault.
+    // In my case, it does not run into any errors,
+    // but this virtual address is not accessible which can be proven by gdb.
+    int test_value = *virt_ptr;
+    (void)test_value; // Suppress unused variable warning
 
     // Test loading programs
     printf("Loading user program 'blank.bin'...\n");

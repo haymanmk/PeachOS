@@ -8,12 +8,16 @@ BUILD_DIR := build
 SRC_DIR := src
 C_INCLUDES := $(SRC_DIR)
 
+STDLIB_DIR := ../stdlib/
+
+C_INCLUDES += $(STDLIB_DIR)/src
+
 AS := $(PREFIX)/bin/$(TARGET)-as
 ASFLAGS := -g -gdwarf-2
 LD := $(PREFIX)/bin/$(TARGET)-ld
 LDFLAGS := -T $(SRC_DIR)/linker.ld --oformat=elf32-i386
 CC := $(PREFIX)/bin/$(TARGET)-gcc
-CC_FLAGS := -g -O0 -ffreestanding -nostdlib -fpic -I$(C_INCLUDES) -Wall
+CC_FLAGS := -g -O0 -ffreestanding -nostdlib -fpic $(addprefix -I,$(C_INCLUDES)) -Wall
 OBJCOPY := $(PREFIX)/bin/$(TARGET)-objcopy
 OBJDUMP := $(PREFIX)/bin/$(TARGET)-objdump
 
@@ -47,7 +51,7 @@ $(TARGET_BIN): $(ASM_OBJS) $(C_OBJS)
 $(BUILD_DIR)/%.S.o: $(SRC_DIR)/%.S
 	@echo "# Assembling $< ..."
 	# Preprocess and assemble
-	$(CC) -E -P -I$(C_INCLUDES) $< | $(AS) $(ASFLAGS) -I$(C_INCLUDES) -o $@ -
+	$(CC) -E -P $(addprefix -I,$(C_INCLUDES)) $< | $(AS) $(ASFLAGS) -I$(C_INCLUDES) -o $@ -
 	@echo "\n"
 
 # Build rules for C files

@@ -15,6 +15,8 @@ typedef enum {
     ISR80H_CMD_PUT_CHAR, // to terminal
 } isr80h_command_num_t;
 
+#define ISR80H_INTERRUPT_NUMBER 0x80
+
 int isr80h_register_commands();
 int isr80h_register_handler(int command_number, idt_interrupt_handler_t handler);
 void* isr80h_handler_c(int syscall_number, idt_interrupt_stack_frame_t* frame);

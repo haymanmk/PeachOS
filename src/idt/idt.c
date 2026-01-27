@@ -6,6 +6,7 @@
 #include "kernel.h"
 #include "task/task.h"
 #include "status.h"
+#include "isr80h/isr80h.h"
 
 // Define gate type for 32-bit interrupt gate with Ring 3 privilege and present bit set
 #define GATE_TYPE_INT_32 (IDT_GATE_TYPE_INT_GATE_32 | IDT_DPL_RING3 | IDT_PRESENT)
@@ -91,7 +92,7 @@ void idt_init() {
     idt_set_gate(21, (uint32_t)idt_control_protection_fault_handler, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
 
     // Set system call interrupt handler (ISR 0x80)
-    idt_set_gate(0x80, (uint32_t)idt_isr80h_handler_asm, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
+    idt_set_gate(ISR80H_INTERRUPT_NUMBER, (uint32_t)idt_isr80h_handler_asm, KERNEL_CODE_SELECTOR, GATE_TYPE_INT_32);
 
     // Load the IDT using the lidt instruction
     idt_load((uint32_t)&idt_ptr);
