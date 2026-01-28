@@ -3,12 +3,13 @@
 #include "isr80h/isr80h.h"
 
 .section .asm
-.global print
-.global getchar
+.global peachos_print
+.global peachos_getchar
+.global peachos_malloc
 
-# void print(const char* str)
-.type print, @ function
-print:
+# void peachos_print(const char* str)
+.type peachos_print, @ function
+peachos_print:
     push %ebp               # Save base pointer
     mov  %esp, %ebp         # Set up new base pointer
 
@@ -21,13 +22,28 @@ print:
     pop  %ebp               # Restore base pointer
     ret
 
-# char getchar()
+# char peachos_getchar()
 # Get keyboard character from ISR80H
-.type getchar, @ function
-getchar:
+.type peachos_getchar, @ function
+peachos_getchar:
     push %ebp               # Save base pointer
     mov  %esp, %ebp         # Set up new base pointer
     mov $ISR80H_CMD_GET_KEYBOARD_CHAR, %eax   # Syscall number for getchar
     int $ISR80H_INTERRUPT_NUMBER             # Trigger software interrupt, ISR 0x80 for syscall
+    pop  %ebp               # Restore base pointer
+    ret
+
+# void* peachos_malloc(size_t size)
+.type peachos_malloc, @ function
+peachos_malloc:
+    push %ebp               # Save base pointer
+    mov  %esp, %ebp         # Set up new base pointer
+    push %ebx               # Save EBX since we will use it
+    mov  8(%ebp), %ebx      # First argument (size) is at offset 8 from EBP
+    push %ebx               # Push size argument
+    mov $ISR80H_CMD_MALLOC, %eax   # Syscall number for malloc
+    int $ISR80H_INTERRUPT_NUMBER             # Trigger software interrupt, ISR 0x80 for syscall
+    add  $4, %esp          # Clean up stack after call. i.e. Remove size argument
+    pop  %ebx               # Restore EBX
     pop  %ebp               # Restore base pointer
     ret

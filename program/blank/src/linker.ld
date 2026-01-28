@@ -5,6 +5,7 @@ SECTIONS
     . = 0x00400000; /* Load address (Virtual Address) */
     .asm : ALIGN(4096)
     {
+        *start.S.o(.asm)
         *(.asm)
     }
     .text : ALIGN(4096)

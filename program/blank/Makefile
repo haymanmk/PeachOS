@@ -17,7 +17,7 @@ ASFLAGS := -g -gdwarf-2
 LD := $(PREFIX)/bin/$(TARGET)-ld
 LDFLAGS := -T $(SRC_DIR)/linker.ld --oformat=elf32-i386
 CC := $(PREFIX)/bin/$(TARGET)-gcc
-CC_FLAGS := -g -O0 -ffreestanding -nostdlib -fpic $(addprefix -I,$(C_INCLUDES)) -Wall
+CC_FLAGS := -g -O0 -gdwarf-2 -ffreestanding -nostdlib -fpic $(addprefix -I,$(C_INCLUDES)) -Wall
 OBJCOPY := $(PREFIX)/bin/$(TARGET)-objcopy
 OBJDUMP := $(PREFIX)/bin/$(TARGET)-objdump
 

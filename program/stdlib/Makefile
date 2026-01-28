@@ -14,7 +14,7 @@ ASFLAGS := -g -gdwarf-2
 LD := $(PREFIX)/bin/$(TARGET)-ld
 LDFLAGS := -T $(SRC_DIR)/linker.ld --oformat=elf32-i386 -relocatable
 CC := $(PREFIX)/bin/$(TARGET)-gcc
-CC_FLAGS := $(C_INCLUDES_FLAGS) -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall
+CC_FLAGS := $(C_INCLUDES_FLAGS) -g -gdwarf-2 -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall
 OBJCOPY := $(PREFIX)/bin/$(TARGET)-objcopy
 OBJDUMP := $(PREFIX)/bin/$(TARGET)-objdump
 

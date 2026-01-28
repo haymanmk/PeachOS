@@ -5,6 +5,7 @@
 #include "config.h"
 #include "kernel.h"
 #include "task/task.h"
+#include "heap.h"
 #include <stddef.h>
 
 static isr80h_command_handler_t isr80h_command_handlers[ISR80H_MAX_COMMANDS];
@@ -19,6 +20,7 @@ int isr80h_register_commands() {
     res += isr80h_register_handler(ISR80H_CMD_PRINT, io_isr80h_command_print);
     res += isr80h_register_handler(ISR80H_CMD_GET_KEYBOARD_CHAR, io_isr80h_command_get_keyboard_char);
     res += isr80h_register_handler(ISR80H_CMD_PUT_CHAR, io_isr80h_command_put_char);
+    res += isr80h_register_handler(ISR80H_CMD_MALLOC, heap_isr80h_command_malloc);
 
     return res;
 }

@@ -201,6 +201,21 @@ int process_get_free_slot() {
 }
 
 /**
+ * @brief Find a free allocation slot in the process's memory allocation tracking array.
+ * @param process Pointer to the process structure.
+ * @return The index of a free allocation slot, or -EBUSY if no slots are available.
+ */
+int process_find_free_allocation_slot(process_t* process) {
+    for (uint16_t i = 0; i < PROGRAM_MAX_ALLOCATIONS; i++) {
+        if (process->mem_alloc[i] == NULL) {
+            return i;
+        }
+    }
+
+    return -EBUSY; // No free allocation slots available
+}
+
+/**
  * @brief Load a process from an executable file.
  * @param filename The path to the executable file.
  * @param out_process Pointer to store the created process.
@@ -361,4 +376,26 @@ int process_load_switch(const char* filename, process_t** out_process) {
     }
 
     return ENONE;
+}
+
+void* process_malloc(process_t* process, size_t size) {
+    if (!process) {
+        return NULL;
+    }
+
+    void* mem = kheap_zmalloc(size);
+    if (!mem) {
+        return NULL;
+    }
+
+    // Track the allocation for later cleanup
+    int slot = process_find_free_allocation_slot(process);
+    if (slot < 0) {
+        // No free allocation slots, free the allocated memory and return NULL
+        kheap_free(mem);
+        return NULL;
+    }
+    process->mem_alloc[slot] = mem;
+
+    return mem;
 }
