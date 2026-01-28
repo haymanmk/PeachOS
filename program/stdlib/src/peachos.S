@@ -38,12 +38,9 @@ peachos_getchar:
 peachos_malloc:
     push %ebp               # Save base pointer
     mov  %esp, %ebp         # Set up new base pointer
-    push %ebx               # Save EBX since we will use it
-    mov  8(%ebp), %ebx      # First argument (size) is at offset 8 from EBP
-    push %ebx               # Push size argument
+    push 8(%ebp)            # Push size argument
     mov $ISR80H_CMD_MALLOC, %eax   # Syscall number for malloc
     int $ISR80H_INTERRUPT_NUMBER             # Trigger software interrupt, ISR 0x80 for syscall
     add  $4, %esp          # Clean up stack after call. i.e. Remove size argument
-    pop  %ebx               # Restore EBX
     pop  %ebp               # Restore base pointer
     ret
