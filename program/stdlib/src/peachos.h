@@ -2,6 +2,7 @@
 #define __PEACHOS_H__
 
 #include <stddef.h>
+#include <stdbool.h>
 
 /**
  * @brief Print a string to the standard output.
@@ -39,5 +40,8 @@ void* peachos_malloc(size_t size);
  * @note This function is implemented in assembly.
  */
 void peachos_free(void* ptr);
+
+int peachos_getkeyblocking();
+void peachos_terminal_readline(char* buffer, size_t max_length, bool echo);
 
 #endif // __PEACHOS_H__

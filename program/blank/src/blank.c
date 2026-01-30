@@ -19,6 +19,10 @@ int main(int argc, char** argv) {
     int res = printf("Testing printf: Hello %s, char %c number %d\n", "World", 'A', 42);
     printf("printf returned: %d\n", res);
 
+    char buffer[128];
+    peachos_terminal_readline(buffer, sizeof(buffer), true);
+    printf("You entered: %s\n", buffer);
+
     while(1) {
         char c;
         if ((c = peachos_getchar()) != '\0') {
