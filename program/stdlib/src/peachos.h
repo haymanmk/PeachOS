@@ -41,7 +41,7 @@ void* peachos_malloc(size_t size);
  */
 void peachos_free(void* ptr);
 
-int peachos_getkeyblocking();
+int peachos_getchar_blocking();
 void peachos_terminal_readline(char* buffer, size_t max_length, bool echo);
 
 #endif // __PEACHOS_H__
