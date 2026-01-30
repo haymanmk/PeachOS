@@ -6,9 +6,10 @@
 /**
  * @brief Print a string to the standard output.
  * @param str The null-terminated string to print.
+ * @return The number of characters printed, or negative value on error.
  * @note This is implemented in assembly.
  */
-void peachos_print(const char* str);
+int peachos_print(const char* str);
 
 /**
  * @brief Get a character from the keyboard input.

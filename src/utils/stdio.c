@@ -70,10 +70,13 @@ void print_char(char c, uint8_t fg, uint8_t bg) {
     }
 }
 
-static void print_string(const char* str, uint8_t fg, uint8_t bg) {
+static int print_string(const char* str, uint8_t fg, uint8_t bg) {
+    int count = 0;
     while (*str) {
         print_char(*str++, fg, bg);
+        count++;
     }
+    return count;
 }
 
 static void itoa(int num, char* buf, int base) {
@@ -120,20 +123,23 @@ static void itoa(int num, char* buf, int base) {
     }
 }
 
-static void handle_format_specifier(char specifier, va_list args) {
+static int handle_format_specifier(char specifier, va_list args) {
     char buffer[32];
+    int count = 0;
 
     switch (specifier) {
         case 's': {
             const char* str = va_arg(args, const char*);
             while (*str) {
                 print_char(*str++, 0x0F, 0x00); // White on black
+                count++;
             }
             break;
         }
         case 'c': {
             char c = (char)va_arg(args, int);
             print_char(c, 0x0F, 0x00); // White on black
+            count++;
             break;
         }
         case 'd': {
@@ -142,6 +148,7 @@ static void handle_format_specifier(char specifier, va_list args) {
             char* str = buffer;
             while (*str) {
                 print_char(*str++, 0x0F, 0x00); // White on black
+                count++;
             }
             break;
         }
@@ -151,6 +158,7 @@ static void handle_format_specifier(char specifier, va_list args) {
             char* str = buffer;
             while (*str) {
                 print_char(*str++, 0x0F, 0x00); // White on black
+                count++;
             }
             break;
         }
@@ -160,6 +168,7 @@ static void handle_format_specifier(char specifier, va_list args) {
             char* str = buffer;
             while (*str) {
                 print_char(*str++, 0x0F, 0x00); // White on black
+                count++;
             }
             break;
         }
@@ -169,47 +178,57 @@ static void handle_format_specifier(char specifier, va_list args) {
             char* str = buffer;
             while (*str) {
                 print_char(toupper(*str++), 0x0F, 0x00); // White on black
+                count++;
             }
             break;
         }
         case 'p': { // Pointer
             void* ptr = va_arg(args, void*);
-            print_string("0x", 0x0F, 0x00); // White on black
+            count += print_string("0x", 0x0F, 0x00); // White on black
             itoa((uintptr_t)ptr, buffer, 16);
-            print_string(buffer, 0x0F, 0x00); // White on black
+            count += print_string(buffer, 0x0F, 0x00); // White on black
             break;
         }
         default:
             print_char('%', 0x0F, 0x00); // Print unknown specifier as is
             print_char(specifier, 0x0F, 0x00); // Print unknown specifier as is
+            count += 2;
             break;
     }
+
+    return count;
 }
 
 /**
  * A simple printf implementation that only supports string literals.
  * @param format The string to print.
+ * @param ... Variable arguments (not yet supported).
+ * @return The number of characters printed, or negative value on error.
  * 
  * TODO: Extend this function to support format specifiers and variable arguments.
  */
-void printf(const char *format, ...) {
+int printf(const char *format, ...) {
     va_list args;
     va_start(args, format);
 
     const char* ptr = format;
+    int count = 0;
 
     while (*ptr) {
         if (*ptr == '%') {
             ptr++;
-            handle_format_specifier(*ptr, args);
+            count += handle_format_specifier(*ptr, args);
             ptr++;
         }
         else {
             print_char(*ptr++, 0x0F, 0x00); // White on black
+            count++;
         }
     }
 
     va_end(args);
+
+    return count;
 }
 
 void clear_screen() {

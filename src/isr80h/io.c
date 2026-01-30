@@ -16,6 +16,7 @@ void* io_isr80h_command_print(idt_interrupt_stack_frame_t* frame) {
     // We are in kernel mode here
     //////////////////////////////////////
     int res = ENONE;
+
     if (!frame) {
         res = -EINVAL; // Invalid argument
         goto exit;
@@ -38,7 +39,7 @@ void* io_isr80h_command_print(idt_interrupt_stack_frame_t* frame) {
         goto exit; // Propagate error
     }
     // Print the string to the console
-    printf("%s", buffer);
+    res = printf("%s", buffer);
 
 exit:
     return ERROR_VOID(res);

@@ -9,15 +9,13 @@
 .global peachos_malloc
 .global peachos_free
 
-# void peachos_print(const char* str)
+# int peachos_print(const char* str)
 .type peachos_print, @ function
 peachos_print:
     push %ebp               # Save base pointer
     mov  %esp, %ebp         # Set up new base pointer
-
     # Push the string argument onto the stack for the syscall
-    mov  8(%ebp), %eax      # First argument is at offset 8 from EBP
-    push %eax                # Push string argument
+    push 8(%ebp)            # First argument is at offset 8 from EBP
     mov $ISR80H_CMD_PRINT, %eax   # Syscall number for print
     int $ISR80H_INTERRUPT_NUMBER             # Trigger software interrupt, ISR 0x80 for syscall
     add  $4, %esp          # Clean up stack after call
