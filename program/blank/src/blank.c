@@ -9,6 +9,8 @@ int main(int argc, char** argv) {
     void* mem = malloc(alloc_size);
     if (mem) {
         peachos_print("Memory allocated successfully.\n");
+        free(mem);
+        peachos_print("Memory freed successfully.\n");
     } else {
         peachos_print("Memory allocation failed.\n");
     }

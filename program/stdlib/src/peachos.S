@@ -6,6 +6,7 @@
 .global peachos_print
 .global peachos_getchar
 .global peachos_malloc
+.global peachos_free
 
 # void peachos_print(const char* str)
 .type peachos_print, @ function
@@ -42,5 +43,17 @@ peachos_malloc:
     mov $ISR80H_CMD_MALLOC, %eax   # Syscall number for malloc
     int $ISR80H_INTERRUPT_NUMBER             # Trigger software interrupt, ISR 0x80 for syscall
     add  $4, %esp          # Clean up stack after call. i.e. Remove size argument
+    pop  %ebp               # Restore base pointer
+    ret
+
+# void peachos_free(void* ptr)
+.type peachos_free, @ function
+peachos_free:
+    push %ebp               # Save base pointer
+    mov  %esp, %ebp         # Set up new base pointer
+    push 8(%ebp)            # Push pointer argument
+    mov $ISR80H_CMD_FREE, %eax   # Syscall number for free
+    int $ISR80H_INTERRUPT_NUMBER             # Trigger software interrupt, ISR 0x80 for syscall
+    add  $4, %esp          # Clean up stack after call. i.e. Remove pointer argument
     pop  %ebp               # Restore base pointer
     ret

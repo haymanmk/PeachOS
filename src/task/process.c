@@ -6,6 +6,7 @@
 #include "utils/string.h"
 #include "fs/file.h"
 #include "kernel.h"
+#include <stddef.h>
 
 process_t* current_process = NULL; // Pointer to the currently running process
 static process_t* process_table[PROGRAM_MAX_PROCESSES]; // Fixed-size process table
@@ -216,6 +217,39 @@ int process_find_free_allocation_slot(process_t* process) {
 }
 
 /**
+ * @brief Verify if a pointer is tracked in the process's memory allocation array.
+ * @param process Pointer to the process structure.
+ * @param ptr The pointer to verify.
+ * @return true if the pointer is tracked, false otherwise.
+ */
+bool process_is_process_pointer(process_t* process, void* ptr) {
+    for (uint16_t i = 0; i < PROGRAM_MAX_ALLOCATIONS; i++) {
+        if (process->mem_alloc[i] == ptr) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * @brief Remove a pointer from the process's memory allocation tracking array.
+ * @param process Pointer to the process structure.
+ * @param ptr The pointer to remove.
+ */
+void process_remove_allocation_pointer(process_t* process, void* ptr) {
+    for (uint16_t i = 0; i < PROGRAM_MAX_ALLOCATIONS; i++) {
+        if (process->mem_alloc[i] == ptr) {
+            process->mem_alloc[i] = NULL;
+            return;
+        }
+    }
+}
+
+/*************************************************/
+/***************** Public API ********************/
+/*************************************************/
+
+/**
  * @brief Load a process from an executable file.
  * @param filename The path to the executable file.
  * @param out_process Pointer to store the created process.
@@ -398,4 +432,21 @@ void* process_malloc(process_t* process, size_t size) {
     process->mem_alloc[slot] = mem;
 
     return mem;
+}
+
+void process_free(process_t* process, void* ptr) {
+    if (!process || !ptr) {
+        return;
+    }
+
+    // Validate if the pointer is tracked in the process's allocation array
+    if (!process_is_process_pointer(process, ptr)) {
+        return;
+    }
+
+    // Remove the pointer from the tracking array
+    process_remove_allocation_pointer(process, ptr);
+
+    // Free the memory
+    kheap_free(ptr);
 }

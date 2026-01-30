@@ -11,6 +11,6 @@ void* malloc(size_t size) {
 }
 
 void free(void* ptr) {
-    // A stub function for free, as memory freeing is not yet implemented
+    peachos_free(ptr);
     return;
 }

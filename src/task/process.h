@@ -43,5 +43,6 @@ process_t* process_get_by_pid(uint16_t pid);
 int process_switch(process_t* process);
 int process_load_switch(const char* filename, process_t** out_process);
 void* process_malloc(process_t* process, size_t size);
+void process_free(process_t* process, void* ptr);
 
 #endif // __PROCESS_H__

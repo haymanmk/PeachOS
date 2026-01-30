@@ -25,4 +25,11 @@ char peachos_getchar();
  */
 void* peachos_malloc(size_t size);
 
+/**
+ * @brief Free previously allocated memory.
+ * @param ptr Pointer to the memory to free.
+ * @note This function is implemented in assembly.
+ */
+void peachos_free(void* ptr);
+
 #endif // __PEACHOS_H__

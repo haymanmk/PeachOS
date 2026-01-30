@@ -24,3 +24,26 @@ void* heap_isr80h_command_malloc(idt_interrupt_stack_frame_t* frame) {
     // Allocate memory for the current process
     return process_malloc(current_task->process, size);
 }
+
+/**
+ * @brief Handle the ISR 0x80 command for freeing memory (free).
+ * @param frame Pointer to the interrupt stack frame.
+ * @return NULL.
+ */
+void* heap_isr80h_command_free(idt_interrupt_stack_frame_t* frame) {
+    // Get current task
+    task_t* current_task = task_get_current();
+    if (!current_task) {
+        return NULL; // No current task, cannot free
+    }
+
+    // The pointer to free is expected to be in task's stack
+    void* ptr = (void*)task_get_stack_item(current_task, 0);
+    if (!ptr) {
+        return NULL; // Cannot free NULL pointer
+    }
+
+    // Free memory for the current process
+    process_free(current_task->process, ptr);
+    return NULL;
+}
