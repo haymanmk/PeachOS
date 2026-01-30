@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
     }
 
     peachos_print(itoa(-12345));
+    peachos_putchar('C');
 
     while(1) {
         char c;

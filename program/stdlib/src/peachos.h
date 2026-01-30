@@ -18,6 +18,13 @@ void peachos_print(const char* str);
 char peachos_getchar();
 
 /**
+ * @brief Put a character to the standard output.
+ * @param c The character to print.
+ * @note This is implemented in assembly.
+ */
+void peachos_putchar(char c);
+
+/**
  * @brief Allocate memory of the specified size.
  * @param size The size of memory to allocate in bytes.
  * @return Pointer to the allocated memory, or NULL if allocation fails.

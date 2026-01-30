@@ -5,6 +5,7 @@
 .section .asm
 .global peachos_print
 .global peachos_getchar
+.global peachos_putchar
 .global peachos_malloc
 .global peachos_free
 
@@ -31,6 +32,18 @@ peachos_getchar:
     mov  %esp, %ebp         # Set up new base pointer
     mov $ISR80H_CMD_GET_KEYBOARD_CHAR, %eax   # Syscall number for getchar
     int $ISR80H_INTERRUPT_NUMBER             # Trigger software interrupt, ISR 0x80 for syscall
+    pop  %ebp               # Restore base pointer
+    ret
+
+# void peachos_putchar(char c)
+.type peachos_putchar, @ function
+peachos_putchar:
+    push %ebp               # Save base pointer
+    mov  %esp, %ebp         # Set up new base pointer
+    push 8(%ebp)            # Push character argument
+    mov $ISR80H_CMD_PUTCHAR, %eax   # Syscall number for putchar
+    int $ISR80H_INTERRUPT_NUMBER             # Trigger software interrupt, ISR 0x80 for syscall
+    add  $4, %esp          # Clean up stack after call. i.e. Remove character argument
     pop  %ebp               # Restore base pointer
     ret
 
