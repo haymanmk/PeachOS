@@ -15,6 +15,8 @@ int main(int argc, char** argv) {
         peachos_print("Memory allocation failed.\n");
     }
 
+    peachos_print(itoa(-12345));
+
     while(1) {
         char c;
         if ((c = peachos_getchar()) != '\0') {
